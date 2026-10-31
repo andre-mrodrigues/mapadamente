@@ -1,6 +1,6 @@
 # Mapa da Mente
 
-Teste de rastreio de neurodivergência em uma página: 107 perguntas, uma por tela, 12 escalas
+Teste de rastreio de neurodivergência em uma página: 109 perguntas, uma por tela, 12 escalas
 (comunicação social, sensorial, rotina, masking, burnout e shutdown, atenção, altas habilidades,
 intensidade e sentido, humor cíclico, depressão PHQ-9, ansiedade GAD-7 e traços frios).
 No fim gera um perfil por escala, glossário, perguntas para o profissional e um PDF.

@@ -125,8 +125,8 @@ const SCALES = [
   itens:[["Deixo tarefas chatas para a última hora, mesmo sabendo que vou me prejudicar."],["Começo muitos projetos e termino poucos."],["Me distraio com facilidade com coisas ao redor ou com meus próprios pensamentos."],["Perco prazos, esqueço compromissos ou perco objetos com frequência."],["Em reunião longa, fico inquieto e preciso me mexer."],["Termino a frase dos outros ou respondo antes de terminarem a pergunta."],["Tenho dificuldade de esperar minha vez."],["Quando algo me interessa muito, entro em hiperfoco e perco a noção do tempo."],["Organizo e concluo tarefas cheias de detalhes sem dificuldade.",1],["Isso acontece desde a infância ou adolescência, não só agora."]]},
  {id:"ahs", nome:"Altas habilidades", base:"Renzulli (três anéis) e Dabrowski (sobre-excitabilidades)", tipo:"lik", termo:"AH/SD (superdotação)",
   explica:"Altas habilidades/superdotação (AH/SD ou AHSD) é capacidade acima da média somada a criatividade e envolvimento intenso com o que interessa. Vem junto com sobre-excitabilidades: mente que não desliga, emoção e senso de justiça intensos. Quando aparece junto de autismo ou TDAH, chama-se dupla excepcionalidade (2e).",
-  oficial:"Avaliação neuropsicológica com teste de inteligência (WAIS-III no Brasil) e análise de perfil; não existe questionário que confirme superdotação.",
-  itens:[["Aprendo assuntos novos muito mais rápido que as pessoas ao meu redor."],["Faço associações entre áreas distantes que surpreendem os outros."],["Tenho dificuldade em ser iniciante: quando não sou bom logo, largo."],["Questiono regras e autoridade quando não vejo lógica nelas."],["Sinto injustiças e questões morais com uma intensidade que os outros acham exagerada."],["Minha cabeça não desliga: penso em várias coisas ao mesmo tempo, até na hora de dormir."],["Me entedio rápido com tarefas repetitivas e sem desafio."],["Desde cedo eu preferia conversar com adultos ou com pessoas mais velhas."],["Mesmo indo bem, muitas vezes me sinto uma fraude que vai ser descoberta."]]},
+  oficial:"Avaliação neuropsicológica completa e presencial, com a escala Wechsler para adultos (WAIS), história de vida e entrevista com quem te conheceu na infância. Não existe questionário nem teste de QI online que confirme superdotação.",
+  itens:[["Aprendo assuntos novos muito mais rápido que as pessoas ao meu redor."],["Faço associações entre áreas distantes que surpreendem os outros."],["Tenho dificuldade em ser iniciante: quando não sou bom logo, largo."],["Questiono regras e autoridade quando não vejo lógica nelas."],["Sinto injustiças e questões morais com uma intensidade que os outros acham exagerada."],["Minha cabeça não desliga: penso em várias coisas ao mesmo tempo, até na hora de dormir."],["Me entedio rápido com tarefas repetitivas e sem desafio."],["Desde cedo eu preferia conversar com adultos ou com pessoas mais velhas."],["Na escola eu aprendia quase sem esforço e o ritmo da aula me entediava."],["Quando criança, usava palavras e fazia perguntas que os adultos achavam avançadas para a minha idade."],["Mesmo indo bem, muitas vezes me sinto uma fraude que vai ser descoberta."]]},
  {id:"int", nome:"Intensidade e sentido", base:"sobre-excitabilidades de Dabrowski; Frankl e Yalom sobre sofrimento existencial", tipo:"lik", termo:"Neurointensidade",
   explica:"Mede o quanto você vive tudo mais forte: pensamento que não para, emoção profunda, imaginação, energia física, perfeccionismo e uma busca constante de sentido. Dabrowski chamou isso de sobre-excitabilidades e via as crises como parte do desenvolvimento. É comum em altas habilidades, mas não depende de QI alto, e explica boa parte do sofrimento de quem se sente 'demais' para o ambiente.",
   oficial:"Não há teste clínico. A pesquisa usa o OEQ-II (Overexcitability Questionnaire); o caminho prático é falar disso com o psicólogo e procurar pares que funcionam parecido.",
@@ -168,15 +168,18 @@ const GLOSS = [
  ["Psicopatia e TPAS","Padrão de pouca empatia, pouca culpa e manipulação. TPAS é o transtorno de personalidade antissocial, o diagnóstico psiquiátrico mais próximo."],
  ["Síndrome do impostor","Sensação de ser uma fraude apesar das evidências de competência. Muito relatada por adultos com altas habilidades."],
  ["Avaliação neuropsicológica","Bateria de testes e entrevistas feita por neuropsicólogo, que investiga autismo, TDAH e AH/SD ao mesmo tempo. É o que gera o laudo."],
- ["WAIS e GAI","WAIS é a escala Wechsler de inteligência para adultos. GAI é um índice que tira memória de trabalho e velocidade, útil quando TDAH ou autismo puxam o QI total para baixo."]
+ ["WAIS e GAI","WAIS é a escala Wechsler de inteligência para adultos, aplicada presencialmente em várias sessões. Ela tem quatro índices: compreensão verbal, raciocínio perceptual, memória operacional e velocidade de processamento. GAI é o índice que deixa de fora memória e velocidade, útil quando TDAH, autismo, depressão ou trauma puxam o QI total para baixo."],
+ ["QI 115 ou 130?","O critério clássico de superdotação é QI a partir de 130, mas não há consenso: parte dos profissionais considera a partir de cerca de 115 quando há criatividade, envolvimento intenso e história compatível. Pergunte ao neuropsicólogo qual critério ele usa."],
+ ["Tripla excepcionalidade","Termo informal para quando altas habilidades e outra condição (como TDAH ou autismo) se somam a uma vulnerabilidade social, como pobreza, racismo ou machismo."]
 ];
 
+const PREP = ["Anote sua história escolar: o que era fácil, o que te entediava, notas e comportamento.", "Liste suas facilidades e dificuldades atuais (sociais, de atenção, de organização, emocionais), seus hiperfocos e as frustrações que se repetem.", "Peça a alguém que te conheceu na infância (mãe, pai) para estar disponível: o neuropsicólogo costuma conversar com essa pessoa.", "Informe todos os remédios que você usa. Estimulantes, antidepressivos, ansiolíticos e estabilizadores mudam atenção, memória e velocidade nos testes.", "Antes de contratar, pergunte: a avaliação é completa e presencial, com WAIS? Quantas sessões? Qual critério de QI você usa para altas habilidades? Calcula o GAI quando há diferença grande entre os índices? Qual o prazo do laudo?", "Desconfie de quem promete laudo em uma sessão, só aplica teste de QI ou faz tudo online sem motivo.", "Se discordar do laudo, buscar uma segunda opinião é legítimo: interpretações variam entre profissionais."];
 const ITEMS = [];
 SCALES.forEach(s => s.itens.forEach((it,i) => ITEMS.push({s:s.id, t:it[0], r:!!it[1], i})));
 const TOTAL = ITEMS.length;
-const KEY = "mapa-da-mente-v3";
+const KEY = "mapa-da-mente-v4";
 
-let st = {step:"intro", idx:0, ans:{}, ctx:{nome:"",idade:"",E:"",C:"",N:"",A:"",O:""}};
+let st = {step:"intro", idx:0, ans:{}, ctx:{nome:"",idade:"",med:"",E:"",C:"",N:"",A:"",O:""}};
 try{ const saved = JSON.parse(localStorage.getItem(KEY)||"null"); if(saved && saved.ans) st = Object.assign(st, saved); }catch(e){}
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(st)); }catch(e){} }
 
@@ -212,7 +215,7 @@ function renderIntro(){
     </div>
   </div>`;
   document.getElementById("go").onclick = () => { st.step = has ? (st.idx>=TOTAL ? "res" : "q") : "ctx"; save(); render(); };
-  const r = document.getElementById("reset"); if(r) r.onclick = () => { st = {step:"ctx", idx:0, ans:{}, ctx:{nome:"",idade:"",E:"",C:"",N:"",A:"",O:""}}; save(); render(); };
+  const r = document.getElementById("reset"); if(r) r.onclick = () => { st = {step:"ctx", idx:0, ans:{}, ctx:{nome:"",idade:"",med:"",E:"",C:"",N:"",A:"",O:""}}; save(); render(); };
 }
 
 function renderCtx(){
@@ -224,6 +227,7 @@ function renderCtx(){
     <div class="grid5">
       <label for="c-nome">Nome<input id="c-nome" type="text" value="${esc(c.nome)}" autocomplete="off"></label>
       <label for="c-idade">Idade<input id="c-idade" type="number" min="12" max="99" value="${esc(c.idade)}"></label>
+      <label for="c-med">Remédios psiquiátricos em uso<input id="c-med" type="text" value="${esc(c.med||"")}" autocomplete="off" placeholder="Ex.: nenhum"></label>
     </div>
     <h3>Percentis do Big Five (0 a 100)</h3>
     <div class="grid5">
@@ -236,7 +240,7 @@ function renderCtx(){
     <div class="row"><button class="btn" id="go">Ir para as perguntas</button><button class="btn ghost" id="back">Voltar</button></div>
   </div>`;
   document.getElementById("go").onclick = () => {
-    ["nome","idade","E","C","N","A","O"].forEach(k => st.ctx[k] = document.getElementById("c-"+k).value.trim());
+    ["nome","idade","med","E","C","N","A","O"].forEach(k => st.ctx[k] = document.getElementById("c-"+k).value.trim());
     st.step = "q"; save(); render();
   };
   document.getElementById("back").onclick = () => { st.step="intro"; render(); };
@@ -383,6 +387,8 @@ function renderRes(){
   <div class="card"><h2>Perguntas para levar ao profissional</h2>
     ${syn.Q.length ? `<ul class="plain">${syn.Q.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>` : '<p class="muted">Nenhuma área ficou alta. Se algo ainda te incomoda, leve mesmo assim.</p>'}
     <p class="note">Para autismo, TDAH e altas habilidades, peça avaliação neuropsicológica completa. Para humor, depressão e ansiedade, procure um psiquiatra. Leve este PDF e, se tiver, seu relatório do Big Five.</p></div>
+  <div class="card"><h2>Como se preparar para a avaliação</h2><ul class="plain">${PREP.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>
+    <p class="hint">Baseado no e-book <em>Superdotação: da suspeita à confirmação técnica</em>, de Elô Lima (elo.barbarulo.com.br).</p></div>
   <div class="card"><h2>Glossário</h2><dl>${GLOSS.map(g=>`<div><dt>${esc(g[0])}</dt><dd>${esc(g[1])}</dd></div>`).join("")}</dl></div>
   <div class="card"><h2>Referências</h2><ul class="plain muted" style="font-size:.9rem">
     <li>Allison, C., Auyeung, B. e Baron-Cohen, S. (2012). AQ-10. J. Am. Acad. Child Adolesc. Psychiatry, 51(2).</li>
@@ -399,6 +405,7 @@ function renderRes(){
     <li>Webb, J. T. et al. (2005). Misdiagnosis and Dual Diagnoses of Gifted Children and Adults.</li>
     <li>Frankl, V. (1946). Em busca de sentido. Yalom, I. (1980). Existential Psychotherapy.</li>
     <li>Singer, J. (1999). Why can't you be normal for once in your life?</li>
+    <li>Lima, E. (2026). Superdotação: da suspeita à confirmação técnica (e-book). elo.barbarulo.com.br.</li>
     <li>Lima, E. (2026). Síndrome dos Inteligentes: neurointensidade, sofrimento invisível e os limites da superdotação como categoria explicativa. elo.barbarulo.com.br.</li>
   </ul></div>`;
   document.getElementById("redo").onclick = () => { st = {step:"ctx", idx:0, ans:{}, ctx:st.ctx}; save(); render(); window.scrollTo(0,0); };
@@ -448,9 +455,12 @@ async function makePdf(sc, syn, bf){
   head("O que o perfil sugere"); syn.L.forEach(bullet);
   if(bf.length){ head("Cruzamento com o Big Five"); bf.forEach(bullet); }
   head("Perguntas para levar ao profissional");
+  if(st.ctx.med) para("Remédios psiquiátricos em uso: " + st.ctx.med, 10, ink, "bold", 2);
   (syn.Q.length ? syn.Q : ["Nenhuma área ficou alta; leve as dúvidas que ainda tiver."]).forEach(bullet);
   para("Autismo, TDAH e altas habilidades: avaliação neuropsicológica completa. Humor, depressão e ansiedade: psiquiatra.", 9.5, mut, "italic", 2);
 
+  head("Como se preparar para a avaliação"); PREP.forEach(bullet);
+  para("Baseado no e-book Superdotação: da suspeita à confirmação técnica, de Elô Lima.", 8.5, mut, "italic", 2);
   head("O que cada escala mede e como confirmar");
   SCALES.forEach(s => { need(16); para(s.termo, 10.5, ink, "bold", 0.5); para(s.explica, 9.5, ink, "normal", 0.5); para("Teste oficial: " + s.oficial, 9, mut, "italic", 2.5); });
 
