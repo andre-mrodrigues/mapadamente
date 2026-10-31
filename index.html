@@ -477,7 +477,7 @@ async function makePdf(sc, syn, bf){
     try{ await dl.save({filename:fname, data:blob}); msg.textContent = "PDF salvo."; }
     catch(e){ msg.textContent = e && e.code==="declined" ? "Download cancelado." : "Não deu para salvar aqui. Tente abrir a página no navegador."; }
   } else {
-    try{ const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = fname; document.body.appendChild(a); a.click(); a.remove(); msg.textContent = "Se o download não começou, abra esta página direto no navegador."; }
+    try{ const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = fname; document.body.appendChild(a); a.click(); a.remove(); msg.textContent = "PDF gerado. Confira sua pasta de downloads."; }
     catch(e){ msg.textContent = "Não deu para baixar aqui. Abra esta página direto no navegador."; }
   }
 }
