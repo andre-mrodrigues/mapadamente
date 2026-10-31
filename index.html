@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Teste de rastreio de neurodivergência: autismo, masking, burnout, TDAH, altas habilidades, intensidade, humor, depressão e ansiedade. Gera um perfil e um PDF para levar ao profissional.">
+<meta property="og:title" content="Mapa da Mente">
+<meta property="og:description" content="Um teste para entender como a sua cabeça funciona. Rastreio, não diagnóstico.">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Mapa da Mente</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Mono:wght@500&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+/* Layout: uma coluna estreita, uma pergunta por tela, como um instrumento de consultório; resultado vira um laudo de rastreio com barras por escala */
+:root{
+  --bg:#EEF2F4; --paper:#FFFFFF; --ink:#13202A; --muted:#5A6B77; --line:#D3DCE2;
+  --accent:#0B7A63; --accent-ink:#FFFFFF; --mid:#B86E00; --high:#0B7A63; --low:#7C8C97; --alert:#B3261E; --alert-bg:#FBEAE8;
+  --track:#E1E8EC;
+  --f-display:"Bricolage Grotesque", "Arial Narrow", Arial, sans-serif;
+  --f-body:"Atkinson Hyperlegible", "Segoe UI", Verdana, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0D1419; --paper:#152029; --ink:#E4EBEF; --muted:#93A5B1; --line:#26343F;
+  --accent:#3CC4A1; --accent-ink:#06231C; --mid:#E9A443; --high:#3CC4A1; --low:#6E808C; --alert:#FF8A80; --alert-bg:#3A1714; --track:#22303A; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0D1419; --paper:#152029; --ink:#E4EBEF; --muted:#93A5B1; --line:#26343F;
+  --accent:#3CC4A1; --accent-ink:#06231C; --mid:#E9A443; --high:#3CC4A1; --low:#6E808C; --alert:#FF8A80; --alert-bg:#3A1714; --track:#22303A; color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:17px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px 48px}
+.wrap{max-width:680px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(2rem,6vw,2.8rem);font-weight:800;letter-spacing:-.01em}
+h2{font-size:1.5rem;font-weight:800}
+h3{font-size:1.1rem;font-weight:600}
+p{margin:0}
+.eyebrow{font-family:var(--f-mono);font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:24px;display:flex;flex-direction:column;gap:14px}
+.muted{color:var(--muted)}
+.stack{display:flex;flex-direction:column;gap:12px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+button{font:inherit;cursor:pointer}
+.btn{background:var(--accent);color:var(--accent-ink);border:0;border-radius:10px;padding:12px 20px;font-weight:700}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn:focus-visible,.opt:focus-visible,input:focus-visible{outline:3px solid var(--mid);outline-offset:2px}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.note{border-left:3px solid var(--mid);padding:4px 0 4px 14px;color:var(--muted);font-size:.95rem}
+.aviso{background:var(--alert-bg);color:var(--ink);border:1px solid var(--alert);border-radius:12px;padding:16px}
+.aviso strong{color:var(--alert)}
+ul.plain{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+/* contexto */
+.grid5{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+label{display:flex;flex-direction:column;gap:4px;font-size:.92rem}
+input[type=number],input[type=text]{font:inherit;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:10px 12px;width:100%}
+/* pergunta */
+.progress{height:6px;background:var(--track);border-radius:99px;overflow:hidden}
+.progress>i{display:block;height:100%;background:var(--accent);width:0;transition:width .25s}
+.qmeta{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-family:var(--f-mono);font-size:.8rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.qtext{font-size:clamp(1.25rem,3.6vw,1.6rem);font-family:var(--f-display);font-weight:600;line-height:1.3;min-height:4.2em}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{display:flex;gap:14px;align-items:center;text-align:left;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.opt .k{font-family:var(--f-mono);width:28px;height:28px;flex:none;display:grid;place-items:center;border-radius:6px;border:1px solid var(--line);font-size:.85rem}
+.opt:hover{border-color:var(--accent)}
+.opt.sel{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--paper))}
+.opt.sel .k{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.hint{font-size:.85rem;color:var(--muted)}
+/* resultado */
+.res{display:flex;flex-direction:column;gap:6px;padding-block:14px;border-top:1px solid var(--line)}
+.res:first-child{border-top:0;padding-top:0}
+.reshead{display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap}
+.score{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:.95rem}
+.bar{position:relative;height:12px;background:var(--track);border-radius:99px}
+.bar>i{position:absolute;inset:0 auto 0 0;border-radius:99px}
+.bar>b{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--muted);opacity:.6}
+.pill{font-family:var(--f-mono);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:99px;border:1px solid currentColor;white-space:nowrap}
+.lv-alto{color:var(--high)} .lv-medio{color:var(--mid)} .lv-baixo{color:var(--low)} .lv-alerta{color:var(--alert)}
+details{border-top:1px solid var(--line);padding-top:10px}
+details summary{cursor:pointer;font-weight:700}
+dl{margin:0;display:flex;flex-direction:column;gap:12px}
+dt{font-weight:700}
+dd{margin:2px 0 0;color:var(--muted)}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.92rem}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--f-mono);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:500}
+@media (prefers-reduced-motion:reduce){.progress>i{transition:none}}
+</style>
+
+</head>
+<body>
+<div class="wrap" id="app"></div>
+
+<script>
+const LIK = ["Discordo totalmente","Discordo","Neutro","Concordo","Concordo totalmente"];
+const FREQ = ["Nenhuma vez","Vários dias","Mais da metade dos dias","Quase todos os dias"];
+
+const SCALES = [
+ {id:"soc", nome:"Comunicação e interação social", base:"AQ e RAADS-R", tipo:"lik", termo:"Traços autistas sociais",
+  explica:"Mede o quanto a interação social exige esforço consciente: entender indiretas, saber a vez de falar, achar conversa fiada sem sentido. No autismo isso costuma estar presente desde a infância.",
+  oficial:"AQ-10 (corte 6 ou mais) ou AQ-50 (32 ou mais), do Autism Research Centre de Cambridge; RAADS-R (65 ou mais).",
+  itens:[["Em conversa em grupo, muitas vezes não sei quando é a minha vez de falar."],["Percebo com facilidade quando alguém está entediado com o que eu digo.",1],["Já me disseram que fui grosso ou inconveniente quando eu só estava sendo sincero."],["Ironia, indireta e \"ler nas entrelinhas\" me cansam ou me confundem."],["Conversa fiada (tempo, fofoca, como foi o fim de semana) me parece inútil."],["Prefiro conversar sobre um assunto que me interessa a conversar sobre pessoas."],["Depois de um evento social, repasso a conversa tentando descobrir se errei algo."],["Fazer amizades novas e mantê-las sempre foi natural para mim.",1],["Desde criança eu sentia que os outros tinham um manual social que eu não recebi."]]},
+ {id:"sen", nome:"Sensorial", base:"RAADS-R, domínio sensório-motor", tipo:"lik", termo:"Sensibilidade sensorial",
+  explica:"Mede o quanto som, luz, textura e multidão te afetam. Hipersensibilidade sensorial é um dos critérios do autismo no DSM-5 e também aparece em pessoas com altas habilidades.",
+  oficial:"RAADS-R, subescala sensório-motora; avaliação com terapeuta ocupacional.",
+  itens:[["Barulhos que os outros nem notam (ventilador, mastigação, tic-tac) me incomodam muito."],["Lugares cheios, com luz forte e muito som, me esgotam rápido."],["Algumas texturas de roupa ou comida são insuportáveis para mim."],["Consigo trabalhar tranquilo num ambiente barulhento.",1],["Quando estou sobrecarregado, preciso de silêncio ou escuro para voltar ao normal."],["Tenho movimentos repetitivos que me acalmam (balançar a perna, mexer em objetos, andar)."]]},
+ {id:"rot", nome:"Rotina e interesses intensos", base:"AQ e RAADS-R, interesses restritos", tipo:"lik", termo:"Interesses restritos e rigidez",
+  explica:"Mede apego a rotina, desconforto com mudanças e interesses que viram obsessão. Hiperfoco é ficar preso num assunto a ponto de esquecer o corpo; no flow você também mergulha, mas sai bem.",
+  oficial:"AQ-50 (subescalas troca de atenção e atenção a detalhes) e RAADS-R (interesses restritos).",
+  itens:[["Mudanças de plano de última hora me desorganizam por dentro, mesmo que eu disfarce."],["Quando um assunto me pega, estudo por horas e esqueço de comer ou dormir."],["Tenho ou tive temas que viram obsessão por meses, e falo deles mais do que os outros aguentam."],["Gosto de fazer as coisas sempre do mesmo jeito."],["Noto padrões, números e detalhes que os outros não percebem."],["Mudo de rotina com facilidade e sem custo nenhum.",1],["Organizar, classificar e sistematizar coisas me dá prazer."]]},
+ {id:"cam", nome:"Camuflagem social (masking)", base:"CAT-Q", tipo:"lik", termo:"Masking",
+  explica:"Masking é esconder ou compensar seu jeito natural para se encaixar: ensaiar conversas, copiar expressões, usar humor como escudo. Quem mascara muito pode pontuar baixo nos testes de autismo e mesmo assim ser autista, e paga com exaustão.",
+  oficial:"CAT-Q (25 itens, 25 a 175 pontos), com versão brasileira validada; não tem corte oficial, serve para comparar.",
+  itens:[["Em situações sociais, sinto que estou atuando um personagem."],["Estudei pessoas, filmes ou séries para aprender como agir socialmente."],["Ensaio mentalmente conversas antes de acontecerem."],["Ajusto conscientemente minha expressão facial e meu contato visual para parecer \"normal\"."],["Uso humor para disfarçar quando não sei como agir."],["Depois de socializar, preciso de muito tempo sozinho para me recuperar."],["As pessoas ficariam surpresas se soubessem quanto esforço eu faço para parecer à vontade."],["Sou exatamente o mesmo com todo mundo, sem esforço.",1],["Sinto que ninguém conhece o meu \"eu\" de verdade."]]},
+ {id:"bur", nome:"Burnout e shutdown", base:"Raymaker et al., 2020; AASPIRE Autistic Burnout Measure", tipo:"lik", termo:"Burnout autista e shutdown",
+  explica:"Burnout autista é exaustão crônica, perda de habilidades que você tinha e menos tolerância a estímulo, vinda de exigência acima da capacidade por muito tempo. Shutdown é o desligamento: ficar sem palavras, travado, precisando sumir. Meltdown é a versão explosiva.",
+  oficial:"AASPIRE Autistic Burnout Measure, revisada (14 itens); leve o resultado ao psiquiatra, porque se parece com depressão e as duas podem coexistir.",
+  itens:[["Há períodos em que só consigo deitar e não falar com ninguém, mesmo com coisas importantes para fazer."],["Nesses períodos, coisas que eu fazia fácil (responder mensagem, falar em reunião) ficam quase impossíveis."],["Quando estou sobrecarregado, \"desligo\": fico sem palavras, travado ou ausente."],["Meu cansaço não melhora com uma boa noite de sono ou um fim de semana."],["Estímulos que eu tolerava (barulho, gente, notificação) passaram a me irritar mais."],["Sinto que as exigências da minha vida estão muito acima da energia que eu tenho."],["Quando consigo reduzir as exigências e ficar mais \"eu mesmo\", melhoro."],["Esse padrão vem piorando nos últimos meses."]]},
+ {id:"tda", nome:"Atenção e impulsividade", base:"ASRS-18 (OMS)", tipo:"lik", termo:"TDAH",
+  explica:"TDAH é uma dificuldade de autorregulação: atenção, freio e organização das tarefas, não de inteligência. Precisa estar presente desde a infância. Combina com procrastinação de tarefas chatas e hiperfoco no que interessa.",
+  oficial:"ASRS-18, versão brasileira na ABDA (tdah.org.br): 4 ou mais itens em \"frequentemente\" numa das partes sugere investigar.",
+  itens:[["Deixo tarefas chatas para a última hora, mesmo sabendo que vou me prejudicar."],["Começo muitos projetos e termino poucos."],["Me distraio com facilidade com coisas ao redor ou com meus próprios pensamentos."],["Perco prazos, esqueço compromissos ou perco objetos com frequência."],["Em reunião longa, fico inquieto e preciso me mexer."],["Termino a frase dos outros ou respondo antes de terminarem a pergunta."],["Tenho dificuldade de esperar minha vez."],["Quando algo me interessa muito, entro em hiperfoco e perco a noção do tempo."],["Organizo e concluo tarefas cheias de detalhes sem dificuldade.",1],["Isso acontece desde a infância ou adolescência, não só agora."]]},
+ {id:"ahs", nome:"Altas habilidades", base:"Renzulli (três anéis) e Dabrowski (sobre-excitabilidades)", tipo:"lik", termo:"AH/SD (superdotação)",
+  explica:"Altas habilidades/superdotação (AH/SD ou AHSD) é capacidade acima da média somada a criatividade e envolvimento intenso com o que interessa. Vem junto com sobre-excitabilidades: mente que não desliga, emoção e senso de justiça intensos. Quando aparece junto de autismo ou TDAH, chama-se dupla excepcionalidade (2e).",
+  oficial:"Avaliação neuropsicológica com teste de inteligência (WAIS-III no Brasil) e análise de perfil; não existe questionário que confirme superdotação.",
+  itens:[["Aprendo assuntos novos muito mais rápido que as pessoas ao meu redor."],["Faço associações entre áreas distantes que surpreendem os outros."],["Tenho dificuldade em ser iniciante: quando não sou bom logo, largo."],["Questiono regras e autoridade quando não vejo lógica nelas."],["Sinto injustiças e questões morais com uma intensidade que os outros acham exagerada."],["Minha cabeça não desliga: penso em várias coisas ao mesmo tempo, até na hora de dormir."],["Me entedio rápido com tarefas repetitivas e sem desafio."],["Desde cedo eu preferia conversar com adultos ou com pessoas mais velhas."],["Mesmo indo bem, muitas vezes me sinto uma fraude que vai ser descoberta."]]},
+ {id:"int", nome:"Intensidade e sentido", base:"sobre-excitabilidades de Dabrowski; Frankl e Yalom sobre sofrimento existencial", tipo:"lik", termo:"Neurointensidade",
+  explica:"Mede o quanto você vive tudo mais forte: pensamento que não para, emoção profunda, imaginação, energia física, perfeccionismo e uma busca constante de sentido. Dabrowski chamou isso de sobre-excitabilidades e via as crises como parte do desenvolvimento. É comum em altas habilidades, mas não depende de QI alto, e explica boa parte do sofrimento de quem se sente 'demais' para o ambiente.",
+  oficial:"Não há teste clínico. A pesquisa usa o OEQ-II (Overexcitability Questionnaire); o caminho prático é falar disso com o psicólogo e procurar pares que funcionam parecido.",
+  itens:[["Penso em tudo em camadas e tenho dificuldade de 'desligar' a análise, mesmo quando quero."],["Sinto as emoções com uma profundidade que as pessoas ao redor não parecem sentir."],["Minha imaginação é tão viva que às vezes me perco nos meus próprios mundos e cenários."],["Tenho uma energia física inquieta: falo rápido, gesticulo, preciso estar em movimento."],["Conversas superficiais me dão um tédio quase físico."],["Sou muito exigente comigo: o que faço quase nunca parece bom o suficiente."],["Erros pequenos meus ficam ecoando na minha cabeça por dias."],["Preciso ver sentido no que faço; sem isso, não consigo me mover."],["Já vivi crises sobre o sentido da vida que as pessoas ao redor não entendiam."],["Sinto que estou no lugar errado do mundo, como se não pertencesse a lugar nenhum."],["Encontrar alguém que pensa no meu ritmo me dá um alívio enorme, e isso é raro."]]},
+ {id:"hum", nome:"Humor cíclico", base:"TEMPS-A (Akiskal) e depressão breve recorrente (Angst)", tipo:"lik", termo:"Ciclotimia e hipertimia",
+  explica:"Temperamento hipertímico é energia alta quase sempre; ciclotímico é oscilar em ciclos curtos entre muito para cima e para baixo. Depressão breve recorrente são quedas de poucos dias que voltam. É importante porque, se houver algo do espectro bipolar, o tratamento muda.",
+  oficial:"TEMPS-A ou MDQ (Mood Disorder Questionnaire), sempre com psiquiatra, antes de qualquer antidepressivo.",
+  itens:[["Tenho fases de energia lá em cima, com pouca necessidade de sono, ideias a mil e vontade de fazer tudo."],["Nessas fases, já gastei dinheiro, assumi compromissos ou tomei decisões de que me arrependi."],["Meu humor muda de \"no topo do mundo\" para \"no chão\" sem um motivo claro."],["Tenho episódios de tristeza ou apatia que duram poucos dias e depois passam sozinhos."],["Esses episódios curtos voltam com certa regularidade (por exemplo, todo mês)."],["Pessoas próximas já comentaram que eu tenho \"fases\"."],["Minha energia e meu humor são praticamente iguais o ano todo.",1],["Tenho parentes com diagnóstico de bipolaridade, depressão ou dependência química."]]},
+ {id:"phq", nome:"Depressão (últimas 2 semanas)", base:"PHQ-9, domínio público", tipo:"freq", termo:"Depressão",
+  explica:"O PHQ-9 é o questionário mais usado no mundo para rastrear depressão. Ele mede as últimas duas semanas, então mostra como você está agora, não quem você é.",
+  oficial:"Esta escala já é o instrumento oficial. Cortes: 5 leve, 10 moderada, 15 moderadamente grave, 20 grave.",
+  itens:[["Pouco interesse ou pouco prazer em fazer as coisas."],["Se sentir para baixo, deprimido ou sem perspectiva."],["Dificuldade para pegar no sono, permanecer dormindo, ou dormir mais do que de costume."],["Se sentir cansado ou com pouca energia."],["Falta de apetite ou comer demais."],["Se sentir mal consigo mesmo, achar que é um fracasso ou que decepcionou a família ou a si mesmo."],["Dificuldade para se concentrar nas coisas, como ler ou ver TV."],["Lentidão para se movimentar ou falar, a ponto de outros notarem; ou o contrário, agitação fora do normal."],["Pensar em se ferir de alguma maneira ou que seria melhor estar morto."]]},
+ {id:"gad", nome:"Ansiedade (últimas 2 semanas)", base:"GAD-7, domínio público", tipo:"freq", termo:"Ansiedade",
+  explica:"O GAD-7 rastreia ansiedade nas últimas duas semanas. Entra aqui porque ansiedade imita e acompanha autismo, TDAH e burnout.",
+  oficial:"Esta escala já é o instrumento oficial. Cortes: 5 leve, 10 moderada, 15 grave.",
+  itens:[["Sentir-se nervoso, ansioso ou muito tenso."],["Não ser capaz de impedir ou controlar as preocupações."],["Preocupar-se muito com diversas coisas."],["Dificuldade para relaxar."],["Ficar tão agitado que é difícil ficar parado."],["Ficar facilmente aborrecido ou irritado."],["Sentir medo como se algo horrível fosse acontecer."]]},
+ {id:"fri", nome:"Traços frios", base:"domínios da escala de psicopatia de Levenson", tipo:"lik", termo:"Psicopatia",
+  explica:"Psicopatia é um padrão de pouca empatia, pouca culpa, manipulação e impulsividade. Na psiquiatria, o mais próximo é o transtorno de personalidade antissocial (TPAS). Quem se preocupa genuinamente em ser psicopata quase nunca é: a própria preocupação é sinal de consciência moral.",
+  oficial:"Só um psiquiatra ou psicólogo forense avalia (PCL-R). Esta escala serve para tirar a dúvida, não para diagnosticar.",
+  itens:[["Sinto culpa de verdade quando magoo alguém.",1],["Manipular pessoas para conseguir o que quero é aceitável se der certo."],["O sofrimento dos outros me deixa indiferente."],["Minto com facilidade, mesmo quando não há necessidade."],["Me preocupo com o impacto das minhas decisões em quem trabalha comigo.",1],["Uso o charme para usar as pessoas e depois descartá-las."],["Promessas e acordos só valem enquanto me convierem."],["Fico mal quando vejo alguém sendo humilhado.",1],["Gosto de correr riscos e me entedio sem adrenalina."],["Raramente penso nas consequências antes de agir."],["As regras são para os outros."],["Me arrependo quando ajo mal com alguém.",1],["Pessoas são meios para os meus fins."],["Consigo me colocar no lugar do outro e sentir o que ele sente.",1]]}
+];
+
+const GLOSS = [
+ ["Neurodiversidade","Ideia proposta pela socióloga Judy Singer nos anos 1990: diferenças neurológicas são variação humana natural, não só doença."],
+ ["Neurointensidade","Viver pensamentos, emoções e sensações com intensidade acima do comum. Vem das sobre-excitabilidades de Dabrowski e é o ponto de partida do artigo Síndrome dos Inteligentes, da Elô Lima."],
+ ["Neurodivergência","Termo guarda-chuva para cérebros que funcionam fora do padrão estatístico: autismo, TDAH, altas habilidades, dislexia e outros. Não é diagnóstico, é uma forma de descrever."],
+ ["TEA (autismo)","Transtorno do espectro autista: diferenças persistentes na comunicação social e padrões restritos de comportamento ou interesses, desde a infância. Nível 1 de suporte é quem precisa de menos apoio."],
+ ["AH/SD ou AHSD","Altas habilidades/superdotação: potencial acima da média em uma ou mais áreas, com criatividade e envolvimento intenso. Não é transtorno e não é só QI alto."],
+ ["Dupla excepcionalidade (2e)","Quando AH/SD aparece junto de outra condição, como autismo ou TDAH. Uma pode mascarar a outra, e por isso o diagnóstico costuma vir tarde."],
+ ["TDAH","Transtorno de déficit de atenção e hiperatividade: dificuldade de autorregular atenção, impulso e organização, presente desde a infância."],
+ ["Masking (camuflagem)","Esconder ou compensar o próprio jeito para se encaixar socialmente. Funciona por fora e cobra por dentro."],
+ ["Shutdown","Desligamento por sobrecarga: ficar sem fala, travado, precisando de isolamento."],
+ ["Meltdown","Reação explosiva de sobrecarga, como choro ou raiva intensos, sem controle voluntário."],
+ ["Burnout autista","Exaustão crônica com perda de habilidades e menor tolerância a estímulos, por exigência acima da capacidade por muito tempo. É diferente de burnout comum e de depressão."],
+ ["Sobre-excitabilidade","Conceito do psiquiatra Kazimierz Dabrowski: intensidade intelectual, emocional, imaginativa, sensorial ou psicomotora acima do comum."],
+ ["Hiperfoco e flow","Os dois são mergulho total num assunto. Flow é prazeroso e você sai bem; hiperfoco te prende a ponto de esquecer comida, sono e compromissos."],
+ ["Ciclotimia e hipertimia","Temperamentos de humor descritos por Hagop Akiskal: oscilações curtas e frequentes (ciclotímico) ou energia alta constante (hipertímico)."],
+ ["Depressão breve recorrente","Episódios depressivos de poucos dias que voltam com regularidade, descritos por Jules Angst."],
+ ["Psicopatia e TPAS","Padrão de pouca empatia, pouca culpa e manipulação. TPAS é o transtorno de personalidade antissocial, o diagnóstico psiquiátrico mais próximo."],
+ ["Síndrome do impostor","Sensação de ser uma fraude apesar das evidências de competência. Muito relatada por adultos com altas habilidades."],
+ ["Avaliação neuropsicológica","Bateria de testes e entrevistas feita por neuropsicólogo, que investiga autismo, TDAH e AH/SD ao mesmo tempo. É o que gera o laudo."],
+ ["WAIS e GAI","WAIS é a escala Wechsler de inteligência para adultos. GAI é um índice que tira memória de trabalho e velocidade, útil quando TDAH ou autismo puxam o QI total para baixo."]
+];
+
+const ITEMS = [];
+SCALES.forEach(s => s.itens.forEach((it,i) => ITEMS.push({s:s.id, t:it[0], r:!!it[1], i})));
+const TOTAL = ITEMS.length;
+const KEY = "mapa-da-mente-v3";
+
+let st = {step:"intro", idx:0, ans:{}, ctx:{nome:"",idade:"",E:"",C:"",N:"",A:"",O:""}};
+try{ const saved = JSON.parse(localStorage.getItem(KEY)||"null"); if(saved && saved.ans) st = Object.assign(st, saved); }catch(e){}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(st)); }catch(e){} }
+
+const app = document.getElementById("app");
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function render(){
+  if(st.step==="intro") return renderIntro();
+  if(st.step==="ctx") return renderCtx();
+  if(st.step==="q") return renderQ();
+  if(st.step==="res") return renderRes();
+}
+
+function renderIntro(){
+  const has = Object.keys(st.ans).length;
+  app.innerHTML = `
+  <div class="stack">
+    <span class="eyebrow">Rastreio de neurodivergência · ${TOTAL} perguntas · cerca de 15 minutos</span>
+    <h1>Mapa da Mente</h1>
+    <p>Um teste para entender como a sua cabeça funciona: traços autistas, masking, burnout e shutdown, atenção, altas habilidades, humor, depressão, ansiedade e até a dúvida da psicopatia. No fim você recebe um perfil por área, a explicação de cada termo e um PDF para levar a um profissional.</p>
+  </div>
+  <div class="card">
+    <h3>Como funciona</h3>
+    <ul class="plain">
+      <li>Uma pergunta por tela. Responda rápido, pensando em como você é na maior parte da vida adulta.</li>
+      <li>As escalas foram escritas a partir dos domínios de instrumentos científicos (AQ, RAADS-R, CAT-Q, ASRS, TEMPS-A). Depressão e ansiedade usam o PHQ-9 e o GAD-7 originais.</li>
+      <li>Você pode usar as teclas 1 a 5 e voltar quando quiser. O progresso fica salvo neste navegador.</li>
+    </ul>
+    <p class="note">Isto é um instrumento de autoconhecimento e triagem. Ele aponta o que investigar, mas não dá diagnóstico. Autismo, TDAH, AH/SD e transtornos de humor só se confirmam com psiquiatra e avaliação neuropsicológica.</p>
+    <div class="row">
+      <button class="btn" id="go">${has ? "Continuar de onde parei" : "Começar"}</button>
+      ${has ? '<button class="btn ghost" id="reset">Recomeçar do zero</button>' : ""}
+    </div>
+  </div>`;
+  document.getElementById("go").onclick = () => { st.step = has ? (st.idx>=TOTAL ? "res" : "q") : "ctx"; save(); render(); };
+  const r = document.getElementById("reset"); if(r) r.onclick = () => { st = {step:"ctx", idx:0, ans:{}, ctx:{nome:"",idade:"",E:"",C:"",N:"",A:"",O:""}}; save(); render(); };
+}
+
+function renderCtx(){
+  const c = st.ctx;
+  app.innerHTML = `
+  <div class="stack"><span class="eyebrow">Antes de começar · opcional</span><h2>Seu contexto</h2>
+  <p class="muted">Tudo aqui é opcional e fica só no seu navegador. Se você já fez o teste de personalidade Big Five do Jordan Peterson (Understand Myself), coloque os percentis: o resultado vai cruzar as duas coisas.</p></div>
+  <div class="card">
+    <div class="grid5">
+      <label for="c-nome">Nome<input id="c-nome" type="text" value="${esc(c.nome)}" autocomplete="off"></label>
+      <label for="c-idade">Idade<input id="c-idade" type="number" min="12" max="99" value="${esc(c.idade)}"></label>
+    </div>
+    <h3>Percentis do Big Five (0 a 100)</h3>
+    <div class="grid5">
+      <label for="c-E">Extroversão<input id="c-E" type="number" min="0" max="100" value="${esc(c.E)}"></label>
+      <label for="c-C">Conscienciosidade<input id="c-C" type="number" min="0" max="100" value="${esc(c.C)}"></label>
+      <label for="c-N">Neuroticismo<input id="c-N" type="number" min="0" max="100" value="${esc(c.N)}"></label>
+      <label for="c-A">Amabilidade<input id="c-A" type="number" min="0" max="100" value="${esc(c.A)}"></label>
+      <label for="c-O">Abertura<input id="c-O" type="number" min="0" max="100" value="${esc(c.O)}"></label>
+    </div>
+    <div class="row"><button class="btn" id="go">Ir para as perguntas</button><button class="btn ghost" id="back">Voltar</button></div>
+  </div>`;
+  document.getElementById("go").onclick = () => {
+    ["nome","idade","E","C","N","A","O"].forEach(k => st.ctx[k] = document.getElementById("c-"+k).value.trim());
+    st.step = "q"; save(); render();
+  };
+  document.getElementById("back").onclick = () => { st.step="intro"; render(); };
+}
+
+function scaleOf(id){ return SCALES.find(s => s.id===id); }
+
+function renderQ(){
+  const it = ITEMS[st.idx]; const s = scaleOf(it.s);
+  const opts = s.tipo==="lik" ? LIK : FREQ;
+  const cur = st.ans[st.idx];
+  const sNum = SCALES.indexOf(s)+1;
+  app.innerHTML = `
+  <div class="progress" aria-hidden="true"><i style="width:${(st.idx/TOTAL*100).toFixed(1)}%"></i></div>
+  <div class="qmeta"><span>Escala ${sNum} de ${SCALES.length} · ${esc(s.nome)}</span><span>${st.idx+1} / ${TOTAL}</span></div>
+  <div class="card">
+    ${s.tipo==="freq" ? '<p class="hint">Nas últimas 2 semanas, com que frequência isso te incomodou?</p>' : ""}
+    <p class="qtext" id="qt">${esc(it.t)}</p>
+    <div class="opts" role="radiogroup" aria-labelledby="qt">
+      ${opts.map((o,k) => `<button class="opt ${cur===k?"sel":""}" role="radio" aria-checked="${cur===k}" data-k="${k}"><span class="k">${k+1}</span><span>${o}</span></button>`).join("")}
+    </div>
+    <div class="row" style="justify-content:space-between">
+      <button class="btn ghost" id="prev" ${st.idx===0?"disabled":""}>Voltar</button>
+      ${cur!==undefined ? '<button class="btn" id="next">Avançar</button>' : '<span class="hint">Escolha uma opção para seguir</span>'}
+    </div>
+  </div>`;
+  app.querySelectorAll(".opt").forEach(b => b.onclick = () => answer(+b.dataset.k));
+  document.getElementById("prev").onclick = () => { if(st.idx>0){ st.idx--; save(); render(); } };
+  const n = document.getElementById("next"); if(n) n.onclick = advance;
+}
+function answer(k){
+  st.ans[st.idx] = k; save();
+  render();
+  setTimeout(advance, 160);
+}
+function advance(){
+  if(st.ans[st.idx]===undefined) return;
+  if(st.idx < TOTAL-1){ st.idx++; } else { st.idx = TOTAL; st.step = "res"; }
+  save(); render(); window.scrollTo(0,0);
+}
+document.addEventListener("keydown", e => {
+  if(st.step!=="q" || e.target.tagName==="INPUT") return;
+  const s = scaleOf(ITEMS[st.idx].s); const max = s.tipo==="lik"?5:4;
+  const n = parseInt(e.key,10);
+  if(n>=1 && n<=max){ answer(n-1); }
+  else if(e.key==="ArrowLeft" && st.idx>0){ st.idx--; save(); render(); }
+  else if(e.key==="ArrowRight"||e.key==="Enter"){ advance(); }
+});
+
+/* ---------- pontuação ---------- */
+function scores(){
+  const out = {};
+  SCALES.forEach(s => {
+    const vals = [];
+    ITEMS.forEach((it,ix) => { if(it.s!==s.id) return; const a = st.ans[ix]; if(a===undefined) return;
+      vals.push(s.tipo==="lik" ? (it.r ? 5-a : a+1) : a); });
+    if(s.tipo==="lik"){
+      const m = vals.length ? vals.reduce((x,y)=>x+y,0)/vals.length : 0;
+      out[s.id] = {v:m, txt:m.toFixed(1).replace(".",",")+" / 5", pct:(m-1)/4, lv: m>=3.5?"alto":m>=2.5?"medio":"baixo"};
+    } else {
+      const sum = vals.reduce((x,y)=>x+y,0); const max = s.itens.length*3;
+      let lv, lab;
+      if(s.id==="phq"){ lab = sum>=20?"grave":sum>=15?"moderadamente grave":sum>=10?"moderada":sum>=5?"leve":"mínima"; }
+      else { lab = sum>=15?"grave":sum>=10?"moderada":sum>=5?"leve":"mínima"; }
+      lv = sum>=10?"alerta":sum>=5?"medio":"baixo";
+      out[s.id] = {v:sum, txt:sum+" / "+max+" · "+lab, pct:sum/max, lv, lab};
+    }
+  });
+  const phq9 = ITEMS.findIndex(it => it.s==="phq" && it.i===8);
+  out.risco = (st.ans[phq9]||0) >= 1;
+  const tdaInf = ITEMS.findIndex(it => it.s==="tda" && it.i===9);
+  out.tdaInfancia = (st.ans[tdaInf]||0) >= 3;
+  return out;
+}
+const LVTXT = {alto:"Bem presente", medio:"Intermediário", baixo:"Pouco presente", alerta:"Atenção"};
+
+function synthesis(sc){
+  const L = [], Q = [];
+  const aut = (sc.soc.v+sc.sen.v+sc.rot.v)/3;
+  if(aut>=3.5){ L.push("Traços autistas bem presentes nas três áreas (social, sensorial e rotina). Vale fazer o AQ-50 ou o RAADS-R oficiais e buscar avaliação para autismo.");
+    Q.push("Meus traços sociais, sensoriais e de rotina justificam uma avaliação para autismo?"); }
+  else if(aut>=2.5 && sc.cam.v>=3.5){ L.push("Traços autistas em zona intermediária com masking alto. Esse é o padrão de quem pode ser autista e esconder bem, comum em diagnósticos tardios.");
+    Q.push("O meu nível de camuflagem pode estar escondendo traços autistas?"); }
+  else if(aut>=2.5){ L.push("Traços autistas em zona intermediária. Pode ser autismo leve, outra condição com sobreposição (TDAH, ansiedade social, altas habilidades) ou só um jeito de ser.");
+    Q.push("Meus traços autistas intermediários pedem investigação ou se explicam por outra coisa?"); }
+  else { L.push("Poucos traços autistas pelo que você respondeu."); }
+  if(sc.cam.lv==="alto" && aut<2.5) L.push("Masking alto mesmo com poucos traços autistas: vale observar se é ansiedade social ou esforço de adaptação ao ambiente.");
+  if(sc.tda.lv==="alto"){ L.push(sc.tdaInfancia ? "Sinais de desatenção e impulsividade fortes e presentes desde cedo. TDAH é uma hipótese séria: faça o ASRS-18 da ABDA e leve ao psiquiatra." : "Sinais de desatenção e impulsividade fortes, mas sem clareza de que vêm da infância. Isso é essencial para o diagnóstico de TDAH; burnout e depressão também derrubam a atenção.");
+    Q.push("Meus sinais de atenção e impulsividade são TDAH ou efeito de sobrecarga?"); }
+  else if(sc.tda.lv==="medio") L.push("Atenção e impulsividade em zona intermediária.");
+  if(sc.int.lv==="alto"){ L.push("Intensidade e busca de sentido bem altas. Boa parte do cansaço pode vir do choque entre essa intensidade e um ambiente que não acompanha. Encontrar pares que funcionam parecido costuma aliviar tanto quanto tratamento.");
+    Q.push("Como lidar com perfeccionismo, autocrítica e crises de sentido sem me apagar?"); }
+  if(sc.int.lv==="alto" && (sc.ahs.lv!=="baixo") && (sc.cam.lv!=="baixo" || sc.bur.lv!=="baixo")) L.push("Seu padrão (intensidade alta, sinais de altas habilidades e desgaste social) é o que a pesquisadora Elô Lima descreve no artigo Síndrome dos Inteligentes, uma proposta não clínica para dar nome a esse sofrimento. Vale ler: elo.barbarulo.com.br.");
+  if(sc.ahs.lv==="alto"){ L.push("Muitos sinais de altas habilidades e intensidade. Só a avaliação neuropsicológica com WAIS confirma; se houver autismo ou TDAH junto, pergunte sobre dupla excepcionalidade.");
+    Q.push("Faz sentido incluir investigação de altas habilidades (WAIS e GAI) na minha avaliação?"); }
+  if(sc.hum.lv==="alto"){ L.push("Oscilações de energia e humor bem presentes. Antes de qualquer antidepressivo, o psiquiatra precisa investigar o espectro bipolar.");
+    Q.push("Minhas oscilações de energia e humor indicam ciclotimia ou espectro bipolar?"); }
+  else if(sc.hum.lv==="medio") L.push("Oscilações de humor em zona intermediária: vale anotar por um mês quando a energia sobe e quando cai.");
+  if(sc.bur.lv==="alto"){ L.push("Sinais fortes de burnout e shutdown. A exigência está acima da sua capacidade agora: reduzir carga e masking ajuda tanto quanto entender o diagnóstico.");
+    Q.push("O que estou vivendo é burnout, depressão ou os dois?"); }
+  if(sc.phq.v>=10){ L.push("O PHQ-9 indica depressão "+sc.phq.lab+" nas últimas duas semanas. Isso merece consulta logo, não só quando der.");
+    Q.push("Meu resultado no PHQ-9 foi "+sc.phq.v+". Preciso de tratamento para depressão agora?"); }
+  if(sc.gad.v>=10){ L.push("O GAD-7 indica ansiedade "+sc.gad.lab+" nas últimas duas semanas.");
+    Q.push("Minha ansiedade é um quadro próprio ou consequência de outra coisa?"); }
+  if(sc.fri.v<2.5) L.push("Traços frios baixos: você sente culpa, empatia e se importa com os outros. A dúvida da psicopatia está respondida.");
+  else if(sc.fri.v<3.5) L.push("Traços frios em zona intermediária, puxados geralmente por impulsividade e gosto por risco, não por falta de empatia. Compare com a escala de atenção.");
+  else { L.push("Traços frios altos. Vale conversar com um psicólogo sobre empatia e impulsividade."); Q.push("Meus traços de impulsividade e frieza merecem acompanhamento?"); }
+  return {L, Q};
+}
+
+function bigFive(sc){
+  const c = st.ctx, n = k => c[k]==="" ? null : +c[k];
+  const E=n("E"), C=n("C"), N=n("N"), A=n("A"), O=n("O"), out=[];
+  if(E!==null && E>=70 && (sc.soc.v+sc.sen.v+sc.rot.v)/3>=2.5) out.push("Você é bem extrovertido (percentil "+E+") e mesmo assim tem traços autistas intermediários ou altos. Em média, autistas são mais introvertidos; extroversão alta com masking alto é o perfil do autista sociável que esconde bem.");
+  if(E!==null && E>=70 && sc.bur.lv==="alto") out.push("Com extroversão no percentil "+E+", o cansaço social provavelmente não vem de gente em si, e sim do tipo de interação: cobrança, conflito e máscara o dia inteiro.");
+  if(C!==null && C<=35 && sc.tda.lv!=="baixo") out.push("Conscienciosidade no percentil "+C+" somada aos sinais de atenção reforça a hipótese de TDAH ou de sobrecarga executiva.");
+  if(N!==null && N<=30 && (sc.phq.v>=10 || sc.bur.lv==="alto")) out.push("Seu neuroticismo era baixo (percentil "+N+"), mas hoje há sinais de depressão ou burnout. Essa mudança é um dado clínico: conte ao médico quando ela começou.");
+  if(N!==null && N>=70 && sc.gad.v>=10) out.push("Neuroticismo alto (percentil "+N+") combina com a ansiedade atual; parte dela pode ser temperamento de base.");
+  if(A!==null && A>=50 && sc.fri.v<3.5) out.push("Amabilidade no percentil "+A+" é mais um sinal contra psicopatia, cujo marcador central é amabilidade muito baixa.");
+  if(O!==null && O>=70 && sc.ahs.lv!=="baixo") out.push("Abertura no percentil "+O+" combina com os sinais de altas habilidades: curiosidade intelectual alta.");
+  return out;
+}
+
+function renderRes(){
+  const sc = scores(); const syn = synthesis(sc); const bf = bigFive(sc);
+  const nome = st.ctx.nome ? ", "+esc(st.ctx.nome) : "";
+  const bars = SCALES.map(s => {
+    const r = sc[s.id]; const color = {alto:"var(--high)",medio:"var(--mid)",baixo:"var(--low)",alerta:"var(--alert)"}[r.lv];
+    const ticks = s.tipo==="lik" ? [ (2.5-1)/4, (3.5-1)/4 ] : (s.id==="phq" ? [5/27,10/27,15/27,20/27] : [5/21,10/21,15/21]);
+    return `<div class="res">
+      <div class="reshead"><h3>${esc(s.nome)}</h3><span class="pill lv-${r.lv}">${LVTXT[r.lv]}</span></div>
+      <div class="bar" role="img" aria-label="${esc(s.nome)}: ${esc(r.txt)}"><i style="width:${Math.max(2,r.pct*100).toFixed(1)}%;background:${color}"></i>${ticks.map(t=>`<b style="left:${(t*100).toFixed(1)}%"></b>`).join("")}</div>
+      <div class="reshead"><span class="score">${esc(r.txt)}</span><span class="hint">base: ${esc(s.base)}</span></div>
+      <details><summary>O que é ${esc(s.termo)} e como confirmar</summary><p class="muted" style="margin-top:8px">${esc(s.explica)}</p><p style="margin-top:8px"><strong>Teste oficial:</strong> ${esc(s.oficial)}</p></details>
+    </div>`; }).join("");
+  app.innerHTML = `
+  <div class="stack"><span class="eyebrow">Resultado · ${new Date().toLocaleDateString("pt-BR")}</span><h1>Seu mapa${nome}</h1>
+  <p class="muted">Escalas de 1 a 5: até 2,4 pouco presente, de 2,5 a 3,4 intermediário, a partir de 3,5 bem presente. Essas faixas orientam a leitura e não são cortes clínicos. Depressão e ansiedade usam os cortes oficiais do PHQ-9 e do GAD-7.</p></div>
+  ${sc.risco ? `<div class="aviso" role="note"><strong>Antes de tudo:</strong> você marcou que pensou em se ferir ou que seria melhor estar morto. Isso merece cuidado hoje. Fale com alguém de confiança e ligue para o CVV no 188 (24 horas, gratuito) ou procure uma UPA.</div>` : ""}
+  <div class="row"><button class="btn" id="pdf">Baixar resultado em PDF</button><button class="btn ghost" id="redo">Refazer o teste</button><span class="hint" id="pdfmsg"></span></div>
+  <div class="card"><h2>O que o seu perfil sugere</h2><ul class="plain">${syn.L.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>
+  ${bf.length ? `<div class="card"><h2>Cruzando com seu Big Five</h2><ul class="plain">${bf.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>` : ""}
+  <div class="card"><h2>Escala por escala</h2><div>${bars}</div></div>
+  <div class="card"><h2>Perguntas para levar ao profissional</h2>
+    ${syn.Q.length ? `<ul class="plain">${syn.Q.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>` : '<p class="muted">Nenhuma área ficou alta. Se algo ainda te incomoda, leve mesmo assim.</p>'}
+    <p class="note">Para autismo, TDAH e altas habilidades, peça avaliação neuropsicológica completa. Para humor, depressão e ansiedade, procure um psiquiatra. Leve este PDF e, se tiver, seu relatório do Big Five.</p></div>
+  <div class="card"><h2>Glossário</h2><dl>${GLOSS.map(g=>`<div><dt>${esc(g[0])}</dt><dd>${esc(g[1])}</dd></div>`).join("")}</dl></div>
+  <div class="card"><h2>Referências</h2><ul class="plain muted" style="font-size:.9rem">
+    <li>Allison, C., Auyeung, B. e Baron-Cohen, S. (2012). AQ-10. J. Am. Acad. Child Adolesc. Psychiatry, 51(2).</li>
+    <li>Baron-Cohen, S. et al. (2001). The Autism-Spectrum Quotient (AQ). J. Autism Dev. Disord., 31(1).</li>
+    <li>Ritvo, R. A. et al. (2011). RAADS-R. J. Autism Dev. Disord., 41.</li>
+    <li>Hull, L. et al. (2019). CAT-Q. J. Autism Dev. Disord., 49.</li>
+    <li>Raymaker, D. M. et al. (2020). Defining autistic burnout. Autism in Adulthood, 2(2).</li>
+    <li>Mattos, P. et al. (2006). ASRS-18, adaptação brasileira. Rev. Psiq. Clín., 33(4).</li>
+    <li>Akiskal, H. S. et al. (2005). TEMPS-A. J. Affect. Disord., 85.</li>
+    <li>Kroenke, K. et al. (2001). PHQ-9. J. Gen. Intern. Med., 16(9).</li>
+    <li>Spitzer, R. L. et al. (2006). GAD-7. Arch. Intern. Med., 166(10).</li>
+    <li>Renzulli, J. S. (1978). What makes giftedness? Phi Delta Kappan, 60(3).</li>
+    <li>Dabrowski, K. (1964). Positive Disintegration.</li>
+    <li>Webb, J. T. et al. (2005). Misdiagnosis and Dual Diagnoses of Gifted Children and Adults.</li>
+    <li>Frankl, V. (1946). Em busca de sentido. Yalom, I. (1980). Existential Psychotherapy.</li>
+    <li>Singer, J. (1999). Why can't you be normal for once in your life?</li>
+    <li>Lima, E. (2026). Síndrome dos Inteligentes: neurointensidade, sofrimento invisível e os limites da superdotação como categoria explicativa. elo.barbarulo.com.br.</li>
+  </ul></div>`;
+  document.getElementById("redo").onclick = () => { st = {step:"ctx", idx:0, ans:{}, ctx:st.ctx}; save(); render(); window.scrollTo(0,0); };
+  document.getElementById("pdf").onclick = () => makePdf(sc, syn, bf);
+}
+
+/* ---------- PDF ---------- */
+async function makePdf(sc, syn, bf){
+  const msg = document.getElementById("pdfmsg");
+  if(!window.jspdf){ msg.textContent = "O gerador de PDF não carregou. Recarregue a página e tente de novo."; return; }
+  const { jsPDF } = window.jspdf;
+  const d = new jsPDF({unit:"mm", format:"a4"});
+  const W = 210, M = 18, CW = W-2*M; let y = 20;
+  const ink=[19,32,42], mut=[90,107,119], acc=[11,122,99], mid=[184,110,0], low=[124,140,151], red=[179,38,30];
+  const need = h => { if(y+h > 280){ d.addPage(); y = 20; } };
+  const para = (txt, size=10, color=ink, style="normal", gap=1.5) => {
+    d.setFont("helvetica", style); d.setFontSize(size); d.setTextColor(...color);
+    const lines = d.splitTextToSize(txt, CW); const lh = size*0.42;
+    lines.forEach(l => { need(lh); d.text(l, M, y); y += lh; }); y += gap;
+  };
+  const bullet = (txt) => {
+    d.setFont("helvetica","normal"); d.setFontSize(10); d.setTextColor(...ink);
+    const lines = d.splitTextToSize(txt, CW-5); const lh = 4.2;
+    need(lh*lines.length);
+    d.text("•", M, y); lines.forEach(l => { d.text(l, M+5, y); y += lh; }); y += 1.2;
+  };
+  const head = (txt) => { y += 3; need(10); d.setFont("helvetica","bold"); d.setFontSize(13); d.setTextColor(...ink); d.text(txt, M, y); y += 2; d.setDrawColor(211,220,226); d.line(M, y, W-M, y); y += 5; };
+
+  d.setFont("helvetica","bold"); d.setFontSize(22); d.setTextColor(...ink); d.text("Mapa da Mente", M, y); y += 7;
+  para("Resultado de rastreio de neurodivergência" + (st.ctx.nome ? " · " + st.ctx.nome : "") + (st.ctx.idade ? ", " + st.ctx.idade + " anos" : "") + " · " + new Date().toLocaleDateString("pt-BR"), 10, mut);
+  para("Instrumento de autoconhecimento e triagem. Não é diagnóstico. Escalas de 1 a 5: até 2,4 pouco presente, 2,5 a 3,4 intermediário, a partir de 3,5 bem presente (faixas de leitura, não cortes clínicos). PHQ-9 e GAD-7 usam cortes oficiais.", 9, mut, "italic", 3);
+  if(sc.risco){ para("ATENÇÃO: a pessoa marcou pensamentos de se ferir ou de que seria melhor estar morta no PHQ-9. Requer cuidado imediato. CVV: 188.", 10, red, "bold", 3); }
+
+  head("Escala por escala");
+  SCALES.forEach(s => {
+    const r = sc[s.id]; const col = {alto:acc, medio:mid, baixo:low, alerta:red}[r.lv];
+    need(14);
+    d.setFont("helvetica","bold"); d.setFontSize(10.5); d.setTextColor(...ink); d.text(s.nome, M, y);
+    d.setFont("helvetica","normal"); d.setFontSize(9.5); d.setTextColor(...col); d.text(LVTXT[r.lv] + " · " + r.txt, W-M, y, {align:"right"});
+    y += 2.5;
+    d.setFillColor(225,232,236); d.roundedRect(M, y, CW, 3, 1.5, 1.5, "F");
+    d.setFillColor(...col); d.roundedRect(M, y, Math.max(3, CW*r.pct), 3, 1.5, 1.5, "F");
+    y += 6.5;
+    d.setFont("helvetica","normal"); d.setFontSize(8); d.setTextColor(...mut); d.text("base: " + s.base, M, y); y += 5;
+  });
+
+  head("O que o perfil sugere"); syn.L.forEach(bullet);
+  if(bf.length){ head("Cruzamento com o Big Five"); bf.forEach(bullet); }
+  head("Perguntas para levar ao profissional");
+  (syn.Q.length ? syn.Q : ["Nenhuma área ficou alta; leve as dúvidas que ainda tiver."]).forEach(bullet);
+  para("Autismo, TDAH e altas habilidades: avaliação neuropsicológica completa. Humor, depressão e ansiedade: psiquiatra.", 9.5, mut, "italic", 2);
+
+  head("O que cada escala mede e como confirmar");
+  SCALES.forEach(s => { need(16); para(s.termo, 10.5, ink, "bold", 0.5); para(s.explica, 9.5, ink, "normal", 0.5); para("Teste oficial: " + s.oficial, 9, mut, "italic", 2.5); });
+
+  head("Glossário");
+  GLOSS.forEach(g => { need(10); para(g[0], 10, ink, "bold", 0.3); para(g[1], 9.5, ink, "normal", 2); });
+
+  head("Respostas");
+  d.setFontSize(8);
+  ITEMS.forEach((it,ix) => { const s = scaleOf(it.s); const a = st.ans[ix]; const lab = a===undefined ? "-" : (s.tipo==="lik" ? (a+1)+" " + LIK[a] : a+" " + FREQ[a]);
+    const lines = d.splitTextToSize((ix+1) + ". " + it.t + (it.r ? " (invertido)" : ""), CW-45); need(3.6*lines.length);
+    d.setFont("helvetica","normal"); d.setTextColor(...ink); lines.forEach((l,j) => d.text(l, M, y + j*3.6));
+    d.setTextColor(...mut); d.text(lab, W-M, y, {align:"right"}); y += 3.6*lines.length + 1; });
+
+  const pages = d.getNumberOfPages();
+  for(let p=1;p<=pages;p++){ d.setPage(p); d.setFont("helvetica","normal"); d.setFontSize(7.5); d.setTextColor(...mut);
+    d.text("Mapa da Mente · rastreio, não diagnóstico · página " + p + " de " + pages, M, 290); }
+
+  const blob = d.output("blob");
+  const fname = "mapa-da-mente" + (st.ctx.nome ? "-" + st.ctx.nome.toLowerCase().normalize("NFD").replace(/[^a-z0-9]+/g,"-") : "") + ".pdf";
+  msg.textContent = "";
+  let dl = null;
+  try{ dl = window.claude && window.claude.use ? await window.claude.use("downloads") : null; }catch(e){ dl = null; }
+  if(dl){
+    try{ await dl.save({filename:fname, data:blob}); msg.textContent = "PDF salvo."; }
+    catch(e){ msg.textContent = e && e.code==="declined" ? "Download cancelado." : "Não deu para salvar aqui. Tente abrir a página no navegador."; }
+  } else {
+    try{ const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = fname; document.body.appendChild(a); a.click(); a.remove(); msg.textContent = "Se o download não começou, abra esta página direto no navegador."; }
+    catch(e){ msg.textContent = "Não deu para baixar aqui. Abra esta página direto no navegador."; }
+  }
+}
+
+render();
+</script>
+
+</body>
+</html>
