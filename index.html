@@ -222,25 +222,17 @@ function renderCtx(){
   const c = st.ctx;
   app.innerHTML = `
   <div class="stack"><span class="eyebrow">Antes de começar · opcional</span><h2>Seu contexto</h2>
-  <p class="muted">Tudo aqui é opcional e fica só no seu navegador. Se você já fez o teste de personalidade Big Five do Jordan Peterson (Understand Myself), coloque os percentis: o resultado vai cruzar as duas coisas.</p></div>
+  <p class="muted">Tudo aqui é opcional e fica só no seu navegador. Seu nome aparece no PDF, e os remédios ajudam o profissional a ler os resultados.</p></div>
   <div class="card">
     <div class="grid5">
       <label for="c-nome">Nome<input id="c-nome" type="text" value="${esc(c.nome)}" autocomplete="off"></label>
       <label for="c-idade">Idade<input id="c-idade" type="number" min="12" max="99" value="${esc(c.idade)}"></label>
       <label for="c-med">Remédios psiquiátricos em uso<input id="c-med" type="text" value="${esc(c.med||"")}" autocomplete="off" placeholder="Ex.: nenhum"></label>
     </div>
-    <h3>Percentis do Big Five (0 a 100)</h3>
-    <div class="grid5">
-      <label for="c-E">Extroversão<input id="c-E" type="number" min="0" max="100" value="${esc(c.E)}"></label>
-      <label for="c-C">Conscienciosidade<input id="c-C" type="number" min="0" max="100" value="${esc(c.C)}"></label>
-      <label for="c-N">Neuroticismo<input id="c-N" type="number" min="0" max="100" value="${esc(c.N)}"></label>
-      <label for="c-A">Amabilidade<input id="c-A" type="number" min="0" max="100" value="${esc(c.A)}"></label>
-      <label for="c-O">Abertura<input id="c-O" type="number" min="0" max="100" value="${esc(c.O)}"></label>
-    </div>
     <div class="row"><button class="btn" id="go">Ir para as perguntas</button><button class="btn ghost" id="back">Voltar</button></div>
   </div>`;
   document.getElementById("go").onclick = () => {
-    ["nome","idade","med","E","C","N","A","O"].forEach(k => st.ctx[k] = document.getElementById("c-"+k).value.trim());
+    ["nome","idade","med"].forEach(k => st.ctx[k] = document.getElementById("c-"+k).value.trim());
     st.step = "q"; save(); render();
   };
   document.getElementById("back").onclick = () => { st.step="intro"; render(); };
