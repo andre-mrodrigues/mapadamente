@@ -487,8 +487,11 @@ function lerSituacao(txt){
   hits.sort((a,b) => b[1]-a[1]);
   return hits.slice(0,3).map(x => x[0]);
 }
+function sitChave(){ return JSON.stringify((st.sit||[]).map(x => (x||"").trim()).filter(Boolean)); }
 function situacoesLidas(sc){
-  return (st.sit||[]).filter(x => x && x.trim()).map(txt => {
+  const ia = st.sitIA && st.sitIA.chave === sitChave() ? st.sitIA.leituras : null;
+  return (st.sit||[]).filter(x => x && x.trim()).map((txt, i) => {
+    if(ia && ia[i]) return {txt: txt.trim(), ids: ia[i].areas.filter(id => VIDA[id]), porque: ia[i].porque, ajuda: ia[i].ajuda, ia: true};
     const ids = lerSituacao(txt);
     // desempata pelas áreas que mais pontuaram no teste
     ids.sort((a,b) => (sc[b] ? sc[b].pct : 0) - (sc[a] ? sc[a].pct : 0));
@@ -513,12 +516,14 @@ function renderSit(){
 
 function sitHTML(sc){
   const lidas = situacoesLidas(sc); if(!lidas.length) return "";
-  return `<section class="card"><h2>As situações que você contou</h2>
+  const ia = lidas.some(x => x.ia);
+  return `<section class="card" id="sitsec"><h2>As situações que você contou</h2>
+    <p class="hint" id="sitstatus">${ia ? "Lido pela IA do Mapa da Mente (Claude). É uma leitura de apoio, não diagnóstico." : "Leitura por palavras-chave."}</p>
     ${lidas.map(x => `<div class="sitbox">
       <blockquote>${esc(x.txt)}</blockquote>
       ${x.ids.length ? `<p class="hint">Conversa com: ${x.ids.map(id => `<span class="chip lv-${sc[id].lv}">${esc(VIDA[id].curto)}</span>`).join(" ")}</p>
-      <p><strong>Por que pode estar acontecendo:</strong> ${esc(VIDA[x.ids[0]].porque)}</p>
-      <p><strong>O que costuma ajudar:</strong> ${esc(VIDA[x.ids[0]].ajuda)}</p>` : `<p class="muted">Não consegui ligar essa situação a uma área pelas palavras usadas. Ela é exatamente o tipo de coisa para levar ao profissional, do jeito que você escreveu.</p>`}
+      <p><strong>Por que pode estar acontecendo:</strong> ${esc(x.porque || VIDA[x.ids[0]].porque)}</p>
+      <p><strong>O que costuma ajudar:</strong> ${esc(x.ajuda || VIDA[x.ids[0]].ajuda)}</p>` : x.porque ? `<p>${esc(x.porque)}</p><p><strong>O que costuma ajudar:</strong> ${esc(x.ajuda)}</p>` : `<p class="muted">Não consegui ligar essa situação a uma área pelas palavras usadas. Ela é exatamente o tipo de coisa para levar ao profissional, do jeito que você escreveu.</p>`}
     </div>`).join("")}</section>`;
 }
 
@@ -566,8 +571,28 @@ function renderRes(){
     <p class="hint">Baseado no e-book <em>Superdotação: da suspeita à confirmação técnica</em>, de Elô Lima (elo.barbarulo.com.br).</p></section>
   <section class="card"><details><summary>Glossário</summary><dl style="margin-top:12px">${GLOSS.map(g=>`<div><dt>${esc(g[0])}</dt><dd>${esc(g[1])}</dd></div>`).join("")}</dl></details></section>
   <section class="card"><details><summary>Referências</summary><ul class="plain muted" style="font-size:.9rem;margin-top:12px">${REFS.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></details></section>`;
-  document.getElementById("redo").onclick = () => { st = {step:"ctx", idx:0, ans:{}, sit:["","",""], ctx:st.ctx}; save(); render(); window.scrollTo(0,0); };
+  document.getElementById("redo").onclick = () => { st = {step:"ctx", idx:0, ans:{}, sit:["","",""], sitIA:null, ctx:st.ctx}; save(); render(); window.scrollTo(0,0); };
   document.getElementById("pdf").onclick = () => makePdf(sc, syn, bf);
+  pedirLeituraIA(sc);
+}
+
+async function pedirLeituraIA(sc){
+  const chave = sitChave();
+  if(chave === "[]" || (st.sitIA && st.sitIA.chave === chave)) return;
+  const status = document.getElementById("sitstatus");
+  if(status) status.textContent = "Lendo suas situações com a IA do Mapa da Mente...";
+  try{
+    const escores = {}; SCALES.forEach(s => escores[s.id] = sc[s.id].txt + " (" + LVTXT[sc[s.id].lv] + ")");
+    const r = await fetch("/api/ler-situacoes", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({situacoes: JSON.parse(chave), escores})});
+    if(!r.ok) throw new Error("http " + r.status);
+    const data = await r.json();
+    if(!Array.isArray(data.leituras) || !data.leituras.length) throw new Error("vazio");
+    st.sitIA = {chave, leituras: data.leituras}; save();
+    const sec = document.getElementById("sitsec");
+    if(sec && st.step==="res"){ const tmp = document.createElement("div"); tmp.innerHTML = sitHTML(sc); sec.replaceWith(tmp.firstElementChild); }
+  }catch(e){
+    if(status) status.textContent = "Leitura por palavras-chave (a leitura com IA não respondeu agora).";
+  }
 }
 
 const REFS = [
@@ -651,8 +676,9 @@ async function makePdf(sc, syn, bf){
   if(lidas.length){ head("As situações que você contou");
     lidas.forEach(x => { need(24); para("\u201c" + x.txt + "\u201d", 10, ink, "italic", 1);
       if(x.ids.length){ para("Conversa com: " + x.ids.map(id => VIDA[id].curto).join(", "), 9, COL[sc[x.ids[0]].lv], "bold", 1);
-        para("Por que pode estar acontecendo: " + VIDA[x.ids[0]].porque, 9.5, ink, "normal", 0.8);
-        para("O que costuma ajudar: " + VIDA[x.ids[0]].ajuda, 9.5, ink, "normal", 3); }
+        para("Por que pode estar acontecendo: " + (x.porque || VIDA[x.ids[0]].porque), 9.5, ink, "normal", 0.8);
+        para("O que costuma ajudar: " + (x.ajuda || VIDA[x.ids[0]].ajuda), 9.5, ink, "normal", 3); }
+      else if(x.porque){ para(x.porque, 9.5, ink, "normal", 0.8); para("O que costuma ajudar: " + x.ajuda, 9.5, ink, "normal", 3); }
       else para("Não deu para ligar a uma área pelas palavras usadas; vale levar ao profissional do jeito que está.", 9.5, mut, "normal", 3); }); }
 
   // cartões

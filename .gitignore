@@ -1,2 +1,3 @@
 .netlify/
 Icon
+node_modules/
