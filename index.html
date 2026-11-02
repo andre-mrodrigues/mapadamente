@@ -87,6 +87,11 @@ dd{margin:2px 0 0;color:var(--muted)}
 table{border-collapse:collapse;width:100%;font-size:.92rem}
 th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}
 th{font-family:var(--f-mono);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.sitbox{display:flex;flex-direction:column;gap:8px;padding-block:12px;border-top:1px solid var(--line)}
+.sitbox:first-of-type{border-top:0}
+.sitbox blockquote{margin:0;padding:10px 14px;background:var(--bg);border-radius:10px;font-style:italic}
+textarea{font:inherit;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:10px 12px;width:100%;resize:vertical}
+textarea:focus-visible{outline:3px solid var(--mid);outline-offset:2px}
 /* mapa visual */
 .wrap.wide{max-width:760px}
 .glance{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:18px;align-items:center}
@@ -212,6 +217,7 @@ function render(){
   if(st.step==="intro") return renderIntro();
   if(st.step==="ctx") return renderCtx();
   if(st.step==="q") return renderQ();
+  if(st.step==="sit") return renderSit();
   if(st.step==="res") return renderRes();
 }
 
@@ -292,11 +298,11 @@ function answer(k){
 }
 function advance(){
   if(st.ans[st.idx]===undefined) return;
-  if(st.idx < TOTAL-1){ st.idx++; } else { st.idx = TOTAL; st.step = "res"; }
+  if(st.idx < TOTAL-1){ st.idx++; } else { st.idx = TOTAL; st.step = "sit"; }
   save(); render(); window.scrollTo(0,0);
 }
 document.addEventListener("keydown", e => {
-  if(st.step!=="q" || e.target.tagName==="INPUT") return;
+  if(st.step!=="q" || e.target.tagName==="INPUT" || e.target.tagName==="TEXTAREA") return;
   const s = scaleOf(ITEMS[st.idx].s); const max = s.tipo==="lik"?5:4;
   const n = parseInt(e.key,10);
   if(n>=1 && n<=max){ answer(n-1); }
@@ -460,6 +466,62 @@ function cardHTML(s, r){
   </article>`;
 }
 
+/* ---------- situações contadas pela pessoa ---------- */
+const PISTAS = {
+ soc:["conversa","reunião","reuniao","grupo","festa","indireta","ironia","papo","entender as pessoas","socializar","falar com","amizade","amigos","vez de falar","sem graça","esquisito"],
+ sen:["barulho","som","música alta","musica alta","luz","cheiro","textura","roupa","etiqueta","shopping","multidão","multidao","lotado","mastigando","fone"],
+ rot:["mudança","mudanca","imprevisto","plano","rotina","de última hora","de ultima hora","obsess","hiperfoco","madrugada","horas estudando","mesmo jeito","organizar","padrão","padrao"],
+ cam:["personagem","fingir","finjo","máscara","mascara","ensaio","ensaiar","atuar","imitar","parecer normal","ninguém me conhece","ninguem me conhece","forçar","forcar"],
+ bur:["cansaço","cansaco","cansado","exausto","esgotado","esgota","deitar","cama","sem energia","não consigo responder","nao consigo responder","shutdown","travo","desligo","sumir","irritado","irrita"],
+ tda:["procrastin","última hora","ultima hora","distraio","distração","distracao","esqueço","esqueco","prazo","foco","começo e não termino","comeco e nao termino","inquieto","perco","atrasado","atraso"],
+ ahs:["aprendo rápido","aprendo rapido","tédio","tedio","entediado","repetitivo","inteligente","superdota","questiono","regra","associação","associacao","impostor","fraude"],
+ int:["sentido","propósito","proposito","intenso","intensidade","perfeccion","crítica","critica","autocrítica","autocritica","injustiça","injustica","não pertenço","nao pertenco","existencial","profundo","superficial"],
+ hum:["fases","energia lá em cima","energia la em cima","euforia","eufórico","euforico","dormir pouco","sem dormir","gastei","impulso","de repente triste","oscila","altos e baixos","humor"],
+ phq:["triste","tristeza","desânimo","desanimo","sem vontade","sem prazer","fracasso","culpa","depress","choro","chorar","vazio"],
+ gad:["ansiedade","ansioso","preocupa","medo","tenso","tensão","tensao","coração acelerado","coracao acelerado","pânico","panico","nervoso"],
+ fri:["mentir","minto","manipul","convencer","risco","adrenalina","charme","persuas"]
+};
+function lerSituacao(txt){
+  const t = txt.toLowerCase();
+  const hits = Object.entries(PISTAS).map(([id, ws]) => [id, ws.filter(w => t.includes(w)).length]).filter(x => x[1] > 0);
+  hits.sort((a,b) => b[1]-a[1]);
+  return hits.slice(0,3).map(x => x[0]);
+}
+function situacoesLidas(sc){
+  return (st.sit||[]).filter(x => x && x.trim()).map(txt => {
+    const ids = lerSituacao(txt);
+    // desempata pelas áreas que mais pontuaram no teste
+    ids.sort((a,b) => (sc[b] ? sc[b].pct : 0) - (sc[a] ? sc[a].pct : 0));
+    return {txt: txt.trim(), ids};
+  });
+}
+
+function renderSit(){
+  const s = st.sit || ["","",""];
+  app.innerHTML = `
+  <div class="stack"><span class="eyebrow">Última etapa · opcional</span><h2>Conte situações do seu dia a dia</h2>
+  <p class="muted">Escreva até três situações que te incomodam, te cansam ou te intrigam, do jeito que você contaria a um amigo. No resultado, o Mapa liga cada uma às áreas do teste e explica por que ela pode estar acontecendo.</p></div>
+  <div class="card">
+    ${[0,1,2].map(i => `<label for="sit-${i}">Situação ${i+1}<textarea id="sit-${i}" rows="3" placeholder="${["Ex.: Depois de uma reunião com cliente eu chego em casa e não consigo falar com ninguém.","Ex.: Deixo a proposta pra última hora mesmo sabendo que vou me apertar.","Ex.: Barulho no escritório me tira do sério e eu perco o foco."][i]}">${esc(s[i]||"")}</textarea></label>`).join("")}
+    <p class="hint">Fica só no seu navegador. A ligação com as áreas é feita por palavras-chave, então descreva o que acontece e o que você sente.</p>
+    <div class="row"><button class="btn" id="go">Ver meu mapa</button><button class="btn ghost" id="skip">Pular</button></div>
+  </div>`;
+  const grab = () => { st.sit = [0,1,2].map(i => document.getElementById("sit-"+i).value); };
+  document.getElementById("go").onclick = () => { grab(); st.step = "res"; save(); render(); window.scrollTo(0,0); };
+  document.getElementById("skip").onclick = () => { st.sit = ["","",""]; st.step = "res"; save(); render(); window.scrollTo(0,0); };
+}
+
+function sitHTML(sc){
+  const lidas = situacoesLidas(sc); if(!lidas.length) return "";
+  return `<section class="card"><h2>As situações que você contou</h2>
+    ${lidas.map(x => `<div class="sitbox">
+      <blockquote>${esc(x.txt)}</blockquote>
+      ${x.ids.length ? `<p class="hint">Conversa com: ${x.ids.map(id => `<span class="chip lv-${sc[id].lv}">${esc(VIDA[id].curto)}</span>`).join(" ")}</p>
+      <p><strong>Por que pode estar acontecendo:</strong> ${esc(VIDA[x.ids[0]].porque)}</p>
+      <p><strong>O que costuma ajudar:</strong> ${esc(VIDA[x.ids[0]].ajuda)}</p>` : `<p class="muted">Não consegui ligar essa situação a uma área pelas palavras usadas. Ela é exatamente o tipo de coisa para levar ao profissional, do jeito que você escreveu.</p>`}
+    </div>`).join("")}</section>`;
+}
+
 function rankScales(sc){
   const present = [], quiet = [];
   SCALES.forEach(s => { const r = sc[s.id]; (r.lv==="baixo" ? quiet : present).push(s); });
@@ -494,6 +556,7 @@ function renderRes(){
     <p class="muted">Da área mais forte para a mais leve. Veja se as situações batem com a sua vida: é isso que mais vale levar ao profissional.</p></section>
   ${rk.present.length ? rk.present.map(s => cardHTML(s, sc[s.id])).join("") : '<div class="card"><p>Nenhuma área ficou em nível intermediário ou alto.</p></div>'}
   ${rk.quiet.length ? `<section class="card"><h2>Aparece pouco em você</h2><div class="chips">${rk.quiet.map(s=>`<span class="chip lv-baixo">${esc(s.nome)} · ${esc(sc[s.id].txt)}</span>`).join("")}</div></section>` : ""}
+  ${sitHTML(sc)}
   <section class="card"><h2>Leitura do conjunto</h2><ul class="plain">${syn.L.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></section>
   ${bf.length ? `<section class="card"><h2>Cruzando com seu Big Five</h2><ul class="plain">${bf.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></section>` : ""}
   <section class="card"><h2>Perguntas para levar ao profissional</h2>
@@ -503,7 +566,7 @@ function renderRes(){
     <p class="hint">Baseado no e-book <em>Superdotação: da suspeita à confirmação técnica</em>, de Elô Lima (elo.barbarulo.com.br).</p></section>
   <section class="card"><details><summary>Glossário</summary><dl style="margin-top:12px">${GLOSS.map(g=>`<div><dt>${esc(g[0])}</dt><dd>${esc(g[1])}</dd></div>`).join("")}</dl></details></section>
   <section class="card"><details><summary>Referências</summary><ul class="plain muted" style="font-size:.9rem;margin-top:12px">${REFS.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></details></section>`;
-  document.getElementById("redo").onclick = () => { st = {step:"ctx", idx:0, ans:{}, ctx:st.ctx}; save(); render(); window.scrollTo(0,0); };
+  document.getElementById("redo").onclick = () => { st = {step:"ctx", idx:0, ans:{}, sit:["","",""], ctx:st.ctx}; save(); render(); window.scrollTo(0,0); };
   document.getElementById("pdf").onclick = () => makePdf(sc, syn, bf);
 }
 
@@ -584,6 +647,13 @@ async function makePdf(sc, syn, bf){
   para("Quanto mais a forma verde se afasta do centro, mais a área aparece. Anéis em 2,5 e 3,5 numa escala de 1 a 5. Depressão e ansiedade medem só as últimas duas semanas e ficam fora do radar.", 8, mut, "italic", 2);
 
   head("Leitura do conjunto"); syn.L.forEach(t => bullet(t));
+  const lidas = situacoesLidas(sc);
+  if(lidas.length){ head("As situações que você contou");
+    lidas.forEach(x => { need(24); para("\u201c" + x.txt + "\u201d", 10, ink, "italic", 1);
+      if(x.ids.length){ para("Conversa com: " + x.ids.map(id => VIDA[id].curto).join(", "), 9, COL[sc[x.ids[0]].lv], "bold", 1);
+        para("Por que pode estar acontecendo: " + VIDA[x.ids[0]].porque, 9.5, ink, "normal", 0.8);
+        para("O que costuma ajudar: " + VIDA[x.ids[0]].ajuda, 9.5, ink, "normal", 3); }
+      else para("Não deu para ligar a uma área pelas palavras usadas; vale levar ao profissional do jeito que está.", 9.5, mut, "normal", 3); }); }
 
   // cartões
   const rk = rankScales(sc);
