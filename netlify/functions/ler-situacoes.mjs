@@ -68,16 +68,15 @@ export default async (req) => {
 
   try {
     const client = new Anthropic();
-    const response = await client.beta.messages.create({
+    const response = await client.messages.create({
       model: "claude-sonnet-5-5",
-      max_tokens: 2000,
-      betas: ["server-side-fallback-2026-07-01"],
-      fallbacks: "default",
+      max_tokens: 4000,
       output_config: { effort: "low", format: { type: "json_schema", schema: SCHEMA } },
       system: SYSTEM,
       messages: [{ role: "user", content: pedido }],
     });
     if (response.stop_reason === "refusal") return Response.json({ erro: "recusado" }, { status: 422 });
+    console.log("stop", response.stop_reason, "model", response.model, "usage", JSON.stringify(response.usage));
     const text = response.content.filter((b) => b.type === "text").map((b) => b.text).join("");
     const data = JSON.parse(text);
     const leituras = (data.leituras || []).slice(0, situacoes.length).map((l) => ({
