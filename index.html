@@ -87,6 +87,27 @@ dd{margin:2px 0 0;color:var(--muted)}
 table{border-collapse:collapse;width:100%;font-size:.92rem}
 th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}
 th{font-family:var(--f-mono);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:500}
+/* mapa visual */
+.wrap.wide{max-width:760px}
+.glance{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:18px;align-items:center}
+@media (max-width:620px){.glance{grid-template-columns:1fr}}
+.radar{width:100%;height:auto;display:block}
+.rd-band-hi{fill:color-mix(in srgb,var(--high) 10%,transparent)}
+.rd-band-mid{fill:color-mix(in srgb,var(--mid) 12%,transparent)}
+.rd-band-lo{fill:var(--track)}
+.rd-axis{stroke:var(--line);stroke-width:1}
+.rd-shape{fill:color-mix(in srgb,var(--high) 22%,transparent);stroke:var(--high);stroke-width:2.5;stroke-linejoin:round}
+.rd-label{fill:var(--ink);font-family:var(--f-body);font-size:13px}
+.levels{display:flex;flex-direction:column;gap:14px}
+.levels h4{margin:0 0 6px;font-family:var(--f-mono);font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;font-weight:500}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:.85rem;padding:4px 10px;border-radius:99px;border:1px solid currentColor;background:var(--paper)}
+.mapcard{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:22px;display:flex;flex-direction:column;gap:10px;border-top:4px solid var(--mc,var(--line))}
+.mapcard:has(.lv-alto){--mc:var(--high)} .mapcard:has(.lv-medio){--mc:var(--mid)} .mapcard:has(.lv-alerta){--mc:var(--alert)}
+.mc-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.mapcard h4{margin:6px 0 0;font-family:var(--f-mono);font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.cenas{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px}
+.cenas li{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:.95rem;line-height:1.45}
 @media (prefers-reduced-motion:reduce){.progress>i{transition:none}}
 </style>
 
@@ -187,6 +208,7 @@ const app = document.getElementById("app");
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
 function render(){
+  if(st.step!=="res") app.classList.remove("wide");
   if(st.step==="intro") return renderIntro();
   if(st.step==="ctx") return renderCtx();
   if(st.step==="q") return renderQ();
@@ -356,53 +378,153 @@ function bigFive(sc){
   return out;
 }
 
+/* ---------- vida real: situações do dia a dia, por que acontecem e o que ajuda ---------- */
+const VIDA = {
+ soc:{curto:"Social",
+  dia:["Numa reunião ou num grupo de WhatsApp, você espera a hora certa de falar e ela passa, ou fala na hora errada.","Alguém solta uma indireta e você só entende horas depois, ou leva ao pé da letra.","Você sai de uma festa repassando cada frase que disse.","Papo sobre o tempo ou sobre o fim de semana te dá vontade de sair dali."],
+  porque:"Para muita gente as regras sociais funcionam no automático. Quando isso exige raciocínio consciente, cada conversa gasta mais energia: o cérebro passa o tempo todo traduzindo sinais que os outros leem sem pensar.",
+  ajuda:"Escolher conversas com propósito, avisar as pessoas próximas que você prefere ser direto e se dar tempo de recuperação depois de eventos longos."},
+ sen:{curto:"Sensorial",
+  dia:["O barulho do ar-condicionado ou de alguém mastigando toma toda a sua atenção.","Shopping cheio ou bar com música alta te esgota em meia hora.","Uma etiqueta de roupa ou a textura de uma comida estraga o seu dia.","Depois de um dia cheio, você precisa de silêncio ou de luz baixa para voltar a si."],
+  porque:"O cérebro filtra estímulos antes de eles chegarem à consciência. Quando esse filtro deixa passar mais coisa, tudo chega com volume alto e o sistema nervoso cansa mais rápido.",
+  ajuda:"Fone com cancelamento de ruído, roupas confortáveis, pausas em lugares calmos e planejar a volta para casa depois de eventos."},
+ rot:{curto:"Rotina",
+  dia:["Uma reunião muda de horário em cima da hora e você fica desorganizado o resto do dia.","Você mergulha num assunto novo e, quando vê, são 3 da manhã.","Fala semanas do mesmo tema até as pessoas pedirem para mudar de assunto.","Percebe o erro numa planilha ou o padrão num gráfico que ninguém viu."],
+  porque:"Previsibilidade economiza energia: quando o dia sai do planejado, o cérebro precisa refazer o mapa. E quando um assunto acende, a atenção vai inteira para ele, o que é ótimo para aprender e ruim para lembrar de comer.",
+  ajuda:"Combinar mudanças com antecedência quando der, usar alarme para pausar o hiperfoco e transformar os temas de interesse em trabalho ou projeto."},
+ cam:{curto:"Masking",
+  dia:["Antes de uma ligação importante, você ensaia o que vai dizer.","No trabalho você é o animado e engraçado; em casa desaba no sofá sem querer falar com ninguém.","Você imita o jeito de falar de quem está por perto para se encaixar.","Sente que as pessoas gostam de um personagem, não de você."],
+  porque:"Camuflar é uma adaptação: você aprendeu que o seu jeito natural causava estranhamento e passou a controlar expressão, tom e assunto. Funciona por fora, mas é como manter um programa pesado rodando o dia inteiro.",
+  ajuda:"Ter pelo menos uma pessoa ou um lugar onde você não precisa atuar, e perceber em que situações o personagem é necessário e em quais ele pode descansar."},
+ bur:{curto:"Burnout",
+  dia:["Tem trabalho urgente e você só consegue ficar deitado olhando para o teto.","Responder uma mensagem simples parece subir uma montanha.","Você se irrita com coisas que antes nem notava.","Passa o fim de semana descansando e na segunda o cansaço continua igual."],
+  porque:"Quando a exigência fica acima da capacidade por muito tempo, sem pausa suficiente, o corpo entra em modo de economia e desliga o que não é vital, como falar, decidir e socializar. Não é preguiça, é proteção.",
+  ajuda:"Reduzir carga de verdade (não só descansar no fim de semana), tirar o masking onde der e conversar com um profissional, porque burnout e depressão se parecem e às vezes andam juntos."},
+ tda:{curto:"Atenção",
+  dia:["A tarefa chata fica para o último minuto, mesmo sabendo que você vai se apertar.","Você abre o computador para uma coisa e meia hora depois está em outra.","Esquece compromissos, perde a chave, deixa prazo passar.","Numa reunião longa, a perna não para e a cabeça vai embora."],
+  porque:"Atenção não depende só de querer: ela é regulada por sistemas do cérebro ligados a recompensa e urgência. Quando esse sistema funciona diferente, o que interessa prende demais e o que é chato quase não engata.",
+  ajuda:"Quebrar tarefas em pedaços pequenos, usar prazos e lembretes externos, trabalhar em blocos curtos e investigar TDAH com um psiquiatra."},
+ ahs:{curto:"Altas habilidades",
+  dia:["Você entende a explicação de primeira e se entedia quando ela é repetida.","Liga dois assuntos distantes e deixa todo mundo surpreso.","Larga uma coisa nova quando percebe que não é bom nela logo de cara.","Questiona uma regra do trabalho porque ela não faz sentido para você."],
+  porque:"Quando o raciocínio anda mais rápido que o ambiente, sobra tempo ocioso na cabeça e ela procura estímulo. A facilidade de aprender também cobra um preço: quem nunca precisou se esforçar não treina a frustração de ser iniciante.",
+  ajuda:"Buscar desafios do seu nível, aceitar de propósito ser iniciante em algo novo e confirmar com avaliação neuropsicológica (WAIS) antes de se definir por isso."},
+ int:{curto:"Intensidade",
+  dia:["Uma crítica pequena fica ecoando na cabeça por dias.","Você não consegue fazer algo só porque mandaram: precisa entender o porquê.","Um filme ou uma injustiça te mexe muito mais do que mexe nos outros.","No meio de um dia normal, bate a pergunta: para que tudo isso?"],
+  porque:"Dabrowski chamava isso de sobre-excitabilidade: o sistema nervoso responde com mais força a ideias, emoções e imagens. Isso dá profundidade e criatividade, mas também amplia a dor e torna difícil aceitar o superficial.",
+  ajuda:"Ter onde pôr a intensidade (escrever, criar, conversar com gente parecida), separar padrão alto de autoataque e lembrar que crise de sentido costuma vir antes de uma reorganização."},
+ hum:{curto:"Humor",
+  dia:["Tem semanas em que você dorme pouco, tem mil ideias e começa cinco projetos.","Nessas fases você gasta, promete ou decide coisas de que se arrepende depois.","Do nada, por alguns dias, some a vontade de tudo, e depois passa.","Gente próxima comenta que você tem fases."],
+  porque:"O humor tem um ritmo ligado a sono, energia e química do cérebro, e em algumas pessoas ele oscila mais e em ciclos curtos. Muitas vezes é temperamento; às vezes é um quadro que pede tratamento específico.",
+  ajuda:"Anotar por um mês sono, energia e humor e levar ao psiquiatra antes de qualquer remédio, porque o tratamento muda se houver algo do espectro bipolar."},
+ phq:{curto:"Depressão",
+  dia:["Coisas que você gostava de fazer perderam a graça.","O sono desregulou: você dorme mal ou dorme demais.","Você se cobra e se sente um fracasso mesmo quando entrega.","Ficou difícil ler ou assistir algo até o fim."],
+  porque:"Depressão muda energia, sono, apetite e concentração, e não é falta de força de vontade. O PHQ-9 mostra como você esteve nas últimas duas semanas.",
+  ajuda:"Conversar com psiquiatra ou psicólogo, manter uma rotina mínima de sono e movimento e não ficar isolado."},
+ gad:{curto:"Ansiedade",
+  dia:["A cabeça fica antecipando tudo o que pode dar errado.","É difícil relaxar mesmo quando está tudo bem.","Você se irrita rápido com coisas pequenas.","O corpo fica tenso: mandíbula travada, ombro duro, coração acelerado."],
+  porque:"Ansiedade é o sistema de alarme disparando mais vezes do que precisa. Ela acompanha e imita TDAH, burnout e autismo, por isso precisa ser olhada junto.",
+  ajuda:"Respiração lenta e atividade física ajudam na hora; terapia (especialmente a cognitivo-comportamental) e avaliação psiquiátrica cuidam da raiz."},
+ fri:{curto:"Traços frios",
+  dia:["Você percebe o que a pessoa quer ouvir e usa isso para convencer.","Corre riscos que os outros evitam e se entedia sem adrenalina.","Age primeiro e pensa nas consequências depois.","Às vezes uma mentira pequena resolve e você nem pensa duas vezes."],
+  porque:"Esses traços aparecem em quem é impulsivo, competitivo ou vive de persuasão, e também em fases de energia alta. O que separa isso de psicopatia é empatia e culpa: se você se importa com quem magoa, o núcleo da psicopatia não está aí.",
+  ajuda:"Perceber em que situações você usa a persuasão de forma instrumental e conversar sobre isso com um psicólogo, sem culpa: é traço, não sentença."}
+};
+const LIKERT_IDS = ["soc","sen","rot","cam","bur","tda","ahs","int","hum","fri"];
+const LVCOR = {alto:"var(--high)", medio:"var(--mid)", baixo:"var(--low)", alerta:"var(--alert)"};
+
+function radarSVG(sc){
+  const N = LIKERT_IDS.length, cx = 200, cy = 190, R = 130;
+  const pt = (i, v) => { const a = -Math.PI/2 + i*2*Math.PI/N; const r = R*(v-1)/4; return [cx + r*Math.cos(a), cy + r*Math.sin(a)]; };
+  const ring = v => LIKERT_IDS.map((_,i) => pt(i,v).map(n=>n.toFixed(1)).join(",")).join(" ");
+  const poly = LIKERT_IDS.map((id,i) => pt(i, Math.max(1, sc[id].v)).map(n=>n.toFixed(1)).join(",")).join(" ");
+  const axes = LIKERT_IDS.map((id,i) => { const [x,y] = pt(i,5); return `<line x1="${cx}" y1="${cy}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" class="rd-axis"/>`; }).join("");
+  const labels = LIKERT_IDS.map((id,i) => { const [x,y] = pt(i,5.75); const anchor = Math.abs(x-cx) < 8 ? "middle" : (x > cx ? "start" : "end");
+    return `<text x="${x.toFixed(1)}" y="${(y+4).toFixed(1)}" text-anchor="${anchor}" class="rd-label">${VIDA[id].curto}</text>`; }).join("");
+  const dots = LIKERT_IDS.map((id,i) => { const [x,y] = pt(i, Math.max(1, sc[id].v)); return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4.5" style="fill:${LVCOR[sc[id].lv]}"/>`; }).join("");
+  return `<svg viewBox="0 0 400 380" role="img" aria-label="Radar com as 10 áreas do teste" class="radar">
+    <polygon points="${ring(5)}" class="rd-band-hi"/><polygon points="${ring(3.5)}" class="rd-band-mid"/><polygon points="${ring(2.5)}" class="rd-band-lo"/>
+    ${axes}<polygon points="${poly}" class="rd-shape"/>${dots}${labels}</svg>`;
+}
+
+function cardHTML(s, r){
+  const v = VIDA[s.id];
+  return `<article class="mapcard">
+    <header class="mc-head"><h3>${esc(s.nome)}</h3><span class="pill lv-${r.lv}">${LVTXT[r.lv]}</span></header>
+    <div class="bar" role="img" aria-label="${esc(s.nome)}: ${esc(r.txt)}"><i style="width:${Math.max(2,r.pct*100).toFixed(1)}%;background:${LVCOR[r.lv]}"></i></div>
+    <p class="score">${esc(r.txt)}</p>
+    <h4>No dia a dia, isso pode aparecer assim</h4>
+    <ul class="cenas">${v.dia.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>
+    <h4>Por que acontece</h4><p>${esc(v.porque)}</p>
+    <h4>O que costuma ajudar</h4><p>${esc(v.ajuda)}</p>
+    <details><summary>O que é ${esc(s.termo)} e como confirmar</summary><p class="muted" style="margin-top:8px">${esc(s.explica)}</p><p style="margin-top:8px"><strong>Teste oficial:</strong> ${esc(s.oficial)}</p></details>
+  </article>`;
+}
+
+function rankScales(sc){
+  const present = [], quiet = [];
+  SCALES.forEach(s => { const r = sc[s.id]; (r.lv==="baixo" ? quiet : present).push(s); });
+  present.sort((a,b) => sc[b.id].pct - sc[a.id].pct);
+  return {present, quiet};
+}
+
 function renderRes(){
-  const sc = scores(); const syn = synthesis(sc); const bf = bigFive(sc);
+  app.classList.add("wide");
+  const sc = scores(); const syn = synthesis(sc); const bf = bigFive(sc); const rk = rankScales(sc);
   const nome = st.ctx.nome ? ", "+esc(st.ctx.nome) : "";
-  const bars = SCALES.map(s => {
-    const r = sc[s.id]; const color = {alto:"var(--high)",medio:"var(--mid)",baixo:"var(--low)",alerta:"var(--alert)"}[r.lv];
-    const ticks = s.tipo==="lik" ? [ (2.5-1)/4, (3.5-1)/4 ] : (s.id==="phq" ? [5/27,10/27,15/27,20/27] : [5/21,10/21,15/21]);
-    return `<div class="res">
-      <div class="reshead"><h3>${esc(s.nome)}</h3><span class="pill lv-${r.lv}">${LVTXT[r.lv]}</span></div>
-      <div class="bar" role="img" aria-label="${esc(s.nome)}: ${esc(r.txt)}"><i style="width:${Math.max(2,r.pct*100).toFixed(1)}%;background:${color}"></i>${ticks.map(t=>`<b style="left:${(t*100).toFixed(1)}%"></b>`).join("")}</div>
-      <div class="reshead"><span class="score">${esc(r.txt)}</span><span class="hint">base: ${esc(s.base)}</span></div>
-      <details><summary>O que é ${esc(s.termo)} e como confirmar</summary><p class="muted" style="margin-top:8px">${esc(s.explica)}</p><p style="margin-top:8px"><strong>Teste oficial:</strong> ${esc(s.oficial)}</p></details>
-    </div>`; }).join("");
+  const group = lv => SCALES.filter(s => sc[s.id].lv===lv || (lv==="alto" && sc[s.id].lv==="alerta"));
+  const chips = lv => group(lv).map(s => `<span class="chip lv-${sc[s.id].lv}">${esc(VIDA[s.id].curto)}</span>`).join("") || '<span class="hint">nenhuma</span>';
   app.innerHTML = `
   <div class="stack"><span class="eyebrow">Resultado · ${new Date().toLocaleDateString("pt-BR")}</span><h1>Seu mapa${nome}</h1>
-  <p class="muted">Escalas de 1 a 5: até 2,4 pouco presente, de 2,5 a 3,4 intermediário, a partir de 3,5 bem presente. Essas faixas orientam a leitura e não são cortes clínicos. Depressão e ansiedade usam os cortes oficiais do PHQ-9 e do GAD-7.</p></div>
+  <p class="muted">Um retrato de como a sua cabeça tem funcionado, com situações do dia a dia para você se reconhecer e o porquê de cada uma. É triagem, não diagnóstico.</p></div>
   ${sc.risco ? `<div class="aviso" role="note"><strong>Antes de tudo:</strong> você marcou que pensou em se ferir ou que seria melhor estar morto. Isso merece cuidado hoje. Fale com alguém de confiança e ligue para o CVV no 188 (24 horas, gratuito) ou procure uma UPA.</div>` : ""}
   <div class="row"><button class="btn" id="pdf">Baixar resultado em PDF</button><button class="btn ghost" id="redo">Refazer o teste</button><span class="hint" id="pdfmsg"></span></div>
-  <div class="card"><h2>O que o seu perfil sugere</h2><ul class="plain">${syn.L.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>
-  ${bf.length ? `<div class="card"><h2>Cruzando com seu Big Five</h2><ul class="plain">${bf.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>` : ""}
-  <div class="card"><h2>Escala por escala</h2><div>${bars}</div></div>
-  <div class="card"><h2>Perguntas para levar ao profissional</h2>
+  <section class="card">
+    <h2>Seu mapa em um olhar</h2>
+    <div class="glance">
+      <div class="radarwrap">${radarSVG(sc)}</div>
+      <div class="levels">
+        <div><h4 class="lv-alto">Bem presente</h4><div class="chips">${chips("alto")}</div></div>
+        <div><h4 class="lv-medio">Intermediário</h4><div class="chips">${chips("medio")}</div></div>
+        <div><h4 class="lv-baixo">Pouco presente</h4><div class="chips">${chips("baixo")}</div></div>
+      </div>
+    </div>
+    <p class="hint">Quanto mais a forma verde se afasta do centro, mais aquela área aparece em você. Os anéis marcam 2,5 e 3,5 numa escala de 1 a 5. Depressão e ansiedade ficam fora do radar porque medem só as últimas duas semanas.</p>
+  </section>
+  <section class="stack"><h2>O que você pode estar vivendo</h2>
+    <p class="muted">Da área mais forte para a mais leve. Veja se as situações batem com a sua vida: é isso que mais vale levar ao profissional.</p></section>
+  ${rk.present.length ? rk.present.map(s => cardHTML(s, sc[s.id])).join("") : '<div class="card"><p>Nenhuma área ficou em nível intermediário ou alto.</p></div>'}
+  ${rk.quiet.length ? `<section class="card"><h2>Aparece pouco em você</h2><div class="chips">${rk.quiet.map(s=>`<span class="chip lv-baixo">${esc(s.nome)} · ${esc(sc[s.id].txt)}</span>`).join("")}</div></section>` : ""}
+  <section class="card"><h2>Leitura do conjunto</h2><ul class="plain">${syn.L.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></section>
+  ${bf.length ? `<section class="card"><h2>Cruzando com seu Big Five</h2><ul class="plain">${bf.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></section>` : ""}
+  <section class="card"><h2>Perguntas para levar ao profissional</h2>
     ${syn.Q.length ? `<ul class="plain">${syn.Q.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>` : '<p class="muted">Nenhuma área ficou alta. Se algo ainda te incomoda, leve mesmo assim.</p>'}
-    <p class="note">Para autismo, TDAH e altas habilidades, peça avaliação neuropsicológica completa. Para humor, depressão e ansiedade, procure um psiquiatra. Leve este PDF e, se tiver, seu relatório do Big Five.</p></div>
-  <div class="card"><h2>Como se preparar para a avaliação</h2><ul class="plain">${PREP.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>
-    <p class="hint">Baseado no e-book <em>Superdotação: da suspeita à confirmação técnica</em>, de Elô Lima (elo.barbarulo.com.br).</p></div>
-  <div class="card"><h2>Glossário</h2><dl>${GLOSS.map(g=>`<div><dt>${esc(g[0])}</dt><dd>${esc(g[1])}</dd></div>`).join("")}</dl></div>
-  <div class="card"><h2>Referências</h2><ul class="plain muted" style="font-size:.9rem">
-    <li>Allison, C., Auyeung, B. e Baron-Cohen, S. (2012). AQ-10. J. Am. Acad. Child Adolesc. Psychiatry, 51(2).</li>
-    <li>Baron-Cohen, S. et al. (2001). The Autism-Spectrum Quotient (AQ). J. Autism Dev. Disord., 31(1).</li>
-    <li>Ritvo, R. A. et al. (2011). RAADS-R. J. Autism Dev. Disord., 41.</li>
-    <li>Hull, L. et al. (2019). CAT-Q. J. Autism Dev. Disord., 49.</li>
-    <li>Raymaker, D. M. et al. (2020). Defining autistic burnout. Autism in Adulthood, 2(2).</li>
-    <li>Mattos, P. et al. (2006). ASRS-18, adaptação brasileira. Rev. Psiq. Clín., 33(4).</li>
-    <li>Akiskal, H. S. et al. (2005). TEMPS-A. J. Affect. Disord., 85.</li>
-    <li>Kroenke, K. et al. (2001). PHQ-9. J. Gen. Intern. Med., 16(9).</li>
-    <li>Spitzer, R. L. et al. (2006). GAD-7. Arch. Intern. Med., 166(10).</li>
-    <li>Renzulli, J. S. (1978). What makes giftedness? Phi Delta Kappan, 60(3).</li>
-    <li>Dabrowski, K. (1964). Positive Disintegration.</li>
-    <li>Webb, J. T. et al. (2005). Misdiagnosis and Dual Diagnoses of Gifted Children and Adults.</li>
-    <li>Frankl, V. (1946). Em busca de sentido. Yalom, I. (1980). Existential Psychotherapy.</li>
-    <li>Singer, J. (1999). Why can't you be normal for once in your life?</li>
-    <li>Lima, E. (2026). Superdotação: da suspeita à confirmação técnica (e-book). elo.barbarulo.com.br.</li>
-    <li>Lima, E. (2026). Síndrome dos Inteligentes: neurointensidade, sofrimento invisível e os limites da superdotação como categoria explicativa. elo.barbarulo.com.br.</li>
-  </ul></div>`;
+    <p class="note">Para autismo, TDAH e altas habilidades, peça avaliação neuropsicológica completa. Para humor, depressão e ansiedade, procure um psiquiatra. Leve este PDF.</p></section>
+  <section class="card"><h2>Como se preparar para a avaliação</h2><ul class="plain">${PREP.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>
+    <p class="hint">Baseado no e-book <em>Superdotação: da suspeita à confirmação técnica</em>, de Elô Lima (elo.barbarulo.com.br).</p></section>
+  <section class="card"><details><summary>Glossário</summary><dl style="margin-top:12px">${GLOSS.map(g=>`<div><dt>${esc(g[0])}</dt><dd>${esc(g[1])}</dd></div>`).join("")}</dl></details></section>
+  <section class="card"><details><summary>Referências</summary><ul class="plain muted" style="font-size:.9rem;margin-top:12px">${REFS.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></details></section>`;
   document.getElementById("redo").onclick = () => { st = {step:"ctx", idx:0, ans:{}, ctx:st.ctx}; save(); render(); window.scrollTo(0,0); };
   document.getElementById("pdf").onclick = () => makePdf(sc, syn, bf);
 }
+
+const REFS = [
+ "Allison, C., Auyeung, B. e Baron-Cohen, S. (2012). AQ-10. J. Am. Acad. Child Adolesc. Psychiatry, 51(2).",
+ "Baron-Cohen, S. et al. (2001). The Autism-Spectrum Quotient (AQ). J. Autism Dev. Disord., 31(1).",
+ "Ritvo, R. A. et al. (2011). RAADS-R. J. Autism Dev. Disord., 41.",
+ "Hull, L. et al. (2019). CAT-Q. J. Autism Dev. Disord., 49.",
+ "Raymaker, D. M. et al. (2020). Defining autistic burnout. Autism in Adulthood, 2(2).",
+ "Mattos, P. et al. (2006). ASRS-18, adaptação brasileira. Rev. Psiq. Clín., 33(4).",
+ "Akiskal, H. S. et al. (2005). TEMPS-A. J. Affect. Disord., 85.",
+ "Kroenke, K. et al. (2001). PHQ-9. J. Gen. Intern. Med., 16(9).",
+ "Spitzer, R. L. et al. (2006). GAD-7. Arch. Intern. Med., 166(10).",
+ "Renzulli, J. S. (1978). What makes giftedness? Phi Delta Kappan, 60(3).",
+ "Dabrowski, K. (1964). Positive Disintegration.",
+ "Webb, J. T. et al. (2005). Misdiagnosis and Dual Diagnoses of Gifted Children and Adults.",
+ "Frankl, V. (1946). Em busca de sentido. Yalom, I. (1980). Existential Psychotherapy.",
+ "Singer, J. (1999). Why can't you be normal for once in your life?",
+ "Lima, E. (2026). Superdotação: da suspeita à confirmação técnica (e-book). elo.barbarulo.com.br.",
+ "Lima, E. (2026). Síndrome dos Inteligentes: neurointensidade, sofrimento invisível e os limites da superdotação como categoria explicativa. elo.barbarulo.com.br."
+];
 
 /* ---------- PDF ---------- */
 async function makePdf(sc, syn, bf){
@@ -410,65 +532,110 @@ async function makePdf(sc, syn, bf){
   if(!window.jspdf){ msg.textContent = "O gerador de PDF não carregou. Recarregue a página e tente de novo."; return; }
   const { jsPDF } = window.jspdf;
   const d = new jsPDF({unit:"mm", format:"a4"});
-  const W = 210, M = 18, CW = W-2*M; let y = 20;
-  const ink=[19,32,42], mut=[90,107,119], acc=[11,122,99], mid=[184,110,0], low=[124,140,151], red=[179,38,30];
-  const need = h => { if(y+h > 280){ d.addPage(); y = 20; } };
-  const para = (txt, size=10, color=ink, style="normal", gap=1.5) => {
-    d.setFont("helvetica", style); d.setFontSize(size); d.setTextColor(...color);
-    const lines = d.splitTextToSize(txt, CW); const lh = size*0.42;
-    lines.forEach(l => { need(lh); d.text(l, M, y); y += lh; }); y += gap;
+  const W = 210, M = 16, CW = W-2*M, BOTTOM = 280; let y = 20;
+  const ink=[19,32,42], mut=[90,107,119], line=[211,220,226], track=[225,232,236];
+  const COL = {alto:[11,122,99], medio:[184,110,0], baixo:[124,140,151], alerta:[179,38,30]};
+  const TINT = {alto:[231,244,240], medio:[252,242,226], baixo:[240,243,245], alerta:[251,234,232]};
+  const newPage = () => { d.addPage(); y = 20; };
+  const need = h => { if(y+h > BOTTOM) newPage(); };
+  const wrap = (txt, size, w) => { d.setFontSize(size); return d.splitTextToSize(txt, w); };
+  const para = (txt, size=10, color=ink, style="normal", gap=1.5, x=M, w=CW) => {
+    d.setFont("helvetica", style); const lines = wrap(txt, size, w); const lh = size*0.42; d.setTextColor(...color);
+    lines.forEach(l => { need(lh); d.text(l, x, y); y += lh; }); y += gap;
   };
-  const bullet = (txt) => {
-    d.setFont("helvetica","normal"); d.setFontSize(10); d.setTextColor(...ink);
-    const lines = d.splitTextToSize(txt, CW-5); const lh = 4.2;
-    need(lh*lines.length);
-    d.text("•", M, y); lines.forEach(l => { d.text(l, M+5, y); y += lh; }); y += 1.2;
+  const bullet = (txt, x=M, w=CW) => {
+    d.setFont("helvetica","normal"); const lines = wrap(txt, 10, w-5); const lh = 4.2; d.setTextColor(...ink);
+    need(lh*lines.length); d.text("•", x, y); lines.forEach(l => { d.text(l, x+5, y); y += lh; }); y += 1.2;
   };
-  const head = (txt) => { y += 3; need(10); d.setFont("helvetica","bold"); d.setFontSize(13); d.setTextColor(...ink); d.text(txt, M, y); y += 2; d.setDrawColor(211,220,226); d.line(M, y, W-M, y); y += 5; };
+  const head = (txt) => { y += 4; need(12); d.setFont("helvetica","bold"); d.setFontSize(14); d.setTextColor(...ink); d.text(txt, M, y); y += 2.5; d.setDrawColor(...line); d.line(M, y, W-M, y); y += 6; };
+  const poly = (pts, style) => { const segs = []; for(let i=1;i<pts.length;i++) segs.push([pts[i][0]-pts[i-1][0], pts[i][1]-pts[i-1][1]]); d.lines(segs, pts[0][0], pts[0][1], [1,1], style, true); };
 
-  d.setFont("helvetica","bold"); d.setFontSize(22); d.setTextColor(...ink); d.text("Mapa da Mente", M, y); y += 7;
-  para("Resultado de rastreio de neurodivergência" + (st.ctx.nome ? " · " + st.ctx.nome : "") + (st.ctx.idade ? ", " + st.ctx.idade + " anos" : "") + " · " + new Date().toLocaleDateString("pt-BR"), 10, mut);
-  para("Instrumento de autoconhecimento e triagem. Não é diagnóstico. Escalas de 1 a 5: até 2,4 pouco presente, 2,5 a 3,4 intermediário, a partir de 3,5 bem presente (faixas de leitura, não cortes clínicos). PHQ-9 e GAD-7 usam cortes oficiais.", 9, mut, "italic", 3);
-  if(sc.risco){ para("ATENÇÃO: a pessoa marcou pensamentos de se ferir ou de que seria melhor estar morta no PHQ-9. Requer cuidado imediato. CVV: 188.", 10, red, "bold", 3); }
+  // capa
+  d.setFillColor(...ink); d.rect(0, 0, W, 38, "F");
+  d.setTextColor(255,255,255); d.setFont("helvetica","bold"); d.setFontSize(24); d.text("Mapa da Mente", M, 19);
+  d.setFont("helvetica","normal"); d.setFontSize(10.5);
+  d.text((st.ctx.nome ? st.ctx.nome : "Resultado") + (st.ctx.idade ? ", " + st.ctx.idade + " anos" : "") + " · " + new Date().toLocaleDateString("pt-BR"), M, 28);
+  y = 48;
+  para("Um retrato de como a sua cabeça tem funcionado, com situações do dia a dia e o porquê de cada uma. É instrumento de autoconhecimento e triagem, não diagnóstico.", 9.5, mut, "italic", 3);
+  if(sc.risco){ para("ATENÇÃO: foram marcados pensamentos de se ferir ou de que seria melhor estar morto (PHQ-9). Isso pede cuidado hoje. CVV: 188, 24 horas.", 10, COL.alerta, "bold", 3); }
 
-  head("Escala por escala");
-  SCALES.forEach(s => {
-    const r = sc[s.id]; const col = {alto:acc, medio:mid, baixo:low, alerta:red}[r.lv];
-    need(14);
-    d.setFont("helvetica","bold"); d.setFontSize(10.5); d.setTextColor(...ink); d.text(s.nome, M, y);
-    d.setFont("helvetica","normal"); d.setFontSize(9.5); d.setTextColor(...col); d.text(LVTXT[r.lv] + " · " + r.txt, W-M, y, {align:"right"});
-    y += 2.5;
-    d.setFillColor(225,232,236); d.roundedRect(M, y, CW, 3, 1.5, 1.5, "F");
-    d.setFillColor(...col); d.roundedRect(M, y, Math.max(3, CW*r.pct), 3, 1.5, 1.5, "F");
-    y += 6.5;
-    d.setFont("helvetica","normal"); d.setFontSize(8); d.setTextColor(...mut); d.text("base: " + s.base, M, y); y += 5;
+  // radar
+  const N = LIKERT_IDS.length, cx = 70, cy = y + 52, R = 40;
+  const pt = (i, v) => { const a = -Math.PI/2 + i*2*Math.PI/N; const r = R*(v-1)/4; return [cx + r*Math.cos(a), cy + r*Math.sin(a)]; };
+  const ring = v => LIKERT_IDS.map((_,i) => pt(i,v));
+  d.setFillColor(231,244,240); poly(ring(5), "F");
+  d.setFillColor(252,242,226); poly(ring(3.5), "F");
+  d.setFillColor(240,243,245); poly(ring(2.5), "F");
+  d.setDrawColor(...line); d.setLineWidth(0.2); LIKERT_IDS.forEach((_,i) => { const [x2,y2] = pt(i,5); d.line(cx, cy, x2, y2); });
+  d.setDrawColor(...COL.alto); d.setLineWidth(0.8); poly(LIKERT_IDS.map((id,i) => pt(i, Math.max(1, sc[id].v))), "S"); d.setLineWidth(0.2);
+  LIKERT_IDS.forEach((id,i) => { const [x,yy] = pt(i, Math.max(1, sc[id].v)); d.setFillColor(...COL[sc[id].lv]); d.circle(x, yy, 1.3, "F");
+    const [lx,ly] = pt(i, 5.9); d.setFont("helvetica","normal"); d.setFontSize(7.5); d.setTextColor(...ink);
+    d.text(VIDA[id].curto, lx, ly+1, {align: Math.abs(lx-cx)<3 ? "center" : (lx>cx ? "left" : "right")}); });
+  // legenda por nível
+  let ly = y + 14; const lx = 128;
+  [["alto","Bem presente"],["medio","Intermediário"],["baixo","Pouco presente"]].forEach(([lv,lab]) => {
+    const ids = SCALES.filter(s => sc[s.id].lv===lv || (lv==="alto" && sc[s.id].lv==="alerta")).map(s => VIDA[s.id].curto);
+    d.setFillColor(...COL[lv]); d.circle(lx+1.5, ly-1.2, 1.5, "F");
+    d.setFont("helvetica","bold"); d.setFontSize(10); d.setTextColor(...COL[lv]); d.text(lab, lx+5, ly);
+    ly += 5; d.setFont("helvetica","normal"); d.setFontSize(9); d.setTextColor(...ink);
+    const ls = d.splitTextToSize(ids.length ? ids.join(", ") : "nenhuma", W-M-lx); ls.forEach(l => { d.text(l, lx+5, ly); ly += 4.2; }); ly += 4;
   });
+  y = cy + R + 14;
+  para("Quanto mais a forma verde se afasta do centro, mais a área aparece. Anéis em 2,5 e 3,5 numa escala de 1 a 5. Depressão e ansiedade medem só as últimas duas semanas e ficam fora do radar.", 8, mut, "italic", 2);
 
-  head("O que o perfil sugere"); syn.L.forEach(bullet);
-  if(bf.length){ head("Cruzamento com o Big Five"); bf.forEach(bullet); }
+  head("Leitura do conjunto"); syn.L.forEach(t => bullet(t));
+
+  // cartões
+  const rk = rankScales(sc);
+  newPage();
+  d.setFont("helvetica","bold"); d.setFontSize(16); d.setTextColor(...ink); d.text("O que você pode estar vivendo", M, y); y += 6;
+  para("Da área mais forte para a mais leve. Veja se as situações batem com a sua vida.", 9.5, mut, "normal", 4);
+  rk.present.forEach(s => {
+    const r = sc[s.id], v = VIDA[s.id], col = COL[r.lv], tint = TINT[r.lv], IW = CW - 10;
+    d.setFont("helvetica","normal");
+    const dia = v.dia.map(t => wrap(t, 9.5, IW-5)), por = wrap(v.porque, 9.5, IW), aj = wrap(v.ajuda, 9.5, IW);
+    const lh = 4;
+    const h = 22 + 6 + dia.reduce((a,b)=>a+b.length*lh+1,0) + 6 + por.length*lh + 6 + aj.length*lh + 6;
+    need(h);
+    const top = y;
+    d.setFillColor(...tint); d.roundedRect(M, top, CW, h, 2.5, 2.5, "F");
+    d.setFillColor(...col); d.rect(M, top, CW, 1.6, "F");
+    let yy = top + 9;
+    d.setFont("helvetica","bold"); d.setFontSize(12.5); d.setTextColor(...ink); d.text(s.nome, M+5, yy);
+    d.setFontSize(9.5); d.setTextColor(...col); d.text(LVTXT[r.lv] + " · " + r.txt, W-M-5, yy, {align:"right"});
+    yy += 4;
+    d.setFillColor(255,255,255); d.roundedRect(M+5, yy, IW, 2.6, 1.3, 1.3, "F");
+    d.setFillColor(...col); d.roundedRect(M+5, yy, Math.max(2.6, IW*r.pct), 2.6, 1.3, 1.3, "F");
+    yy += 9;
+    const sub = t => { d.setFont("helvetica","bold"); d.setFontSize(9); d.setTextColor(...col); d.text(t.toUpperCase(), M+5, yy); yy += 5; d.setFont("helvetica","normal"); d.setFontSize(9.5); d.setTextColor(...ink); };
+    sub("No dia a dia, isso pode aparecer assim");
+    dia.forEach(ls => { d.text("•", M+5, yy); ls.forEach(l => { d.text(l, M+10, yy); yy += lh; }); yy += 1; });
+    yy += 2; sub("Por que acontece"); por.forEach(l => { d.text(l, M+5, yy); yy += lh; });
+    yy += 2; sub("O que costuma ajudar"); aj.forEach(l => { d.text(l, M+5, yy); yy += lh; });
+    y = top + h + 5;
+  });
+  if(rk.quiet.length){ head("Aparece pouco em você"); rk.quiet.forEach(s => bullet(s.nome + " · " + sc[s.id].txt)); }
+
+  if(bf.length){ head("Cruzamento com o Big Five"); bf.forEach(t => bullet(t)); }
   head("Perguntas para levar ao profissional");
   if(st.ctx.med) para("Remédios psiquiátricos em uso: " + st.ctx.med, 10, ink, "bold", 2);
-  (syn.Q.length ? syn.Q : ["Nenhuma área ficou alta; leve as dúvidas que ainda tiver."]).forEach(bullet);
+  (syn.Q.length ? syn.Q : ["Nenhuma área ficou alta; leve as dúvidas que ainda tiver."]).forEach(t => bullet(t));
   para("Autismo, TDAH e altas habilidades: avaliação neuropsicológica completa. Humor, depressão e ansiedade: psiquiatra.", 9.5, mut, "italic", 2);
-
-  head("Como se preparar para a avaliação"); PREP.forEach(bullet);
+  head("Como se preparar para a avaliação"); PREP.forEach(t => bullet(t));
   para("Baseado no e-book Superdotação: da suspeita à confirmação técnica, de Elô Lima.", 8.5, mut, "italic", 2);
   head("O que cada escala mede e como confirmar");
   SCALES.forEach(s => { need(16); para(s.termo, 10.5, ink, "bold", 0.5); para(s.explica, 9.5, ink, "normal", 0.5); para("Teste oficial: " + s.oficial, 9, mut, "italic", 2.5); });
-
   head("Glossário");
   GLOSS.forEach(g => { need(10); para(g[0], 10, ink, "bold", 0.3); para(g[1], 9.5, ink, "normal", 2); });
-
   head("Respostas");
-  d.setFontSize(8);
   ITEMS.forEach((it,ix) => { const s = scaleOf(it.s); const a = st.ans[ix]; const lab = a===undefined ? "-" : (s.tipo==="lik" ? (a+1)+" " + LIK[a] : a+" " + FREQ[a]);
-    const lines = d.splitTextToSize((ix+1) + ". " + it.t + (it.r ? " (invertido)" : ""), CW-45); need(3.6*lines.length);
-    d.setFont("helvetica","normal"); d.setTextColor(...ink); lines.forEach((l,j) => d.text(l, M, y + j*3.6));
+    d.setFont("helvetica","normal"); const lines = wrap((ix+1) + ". " + it.t + (it.r ? " (invertido)" : ""), 8, CW-45); need(3.6*lines.length);
+    d.setFontSize(8); d.setTextColor(...ink); lines.forEach((l,j) => d.text(l, M, y + j*3.6));
     d.setTextColor(...mut); d.text(lab, W-M, y, {align:"right"}); y += 3.6*lines.length + 1; });
 
   const pages = d.getNumberOfPages();
   for(let p=1;p<=pages;p++){ d.setPage(p); d.setFont("helvetica","normal"); d.setFontSize(7.5); d.setTextColor(...mut);
-    d.text("Mapa da Mente · rastreio, não diagnóstico · página " + p + " de " + pages, M, 290); }
+    d.text("Mapa da Mente · rastreio, não diagnóstico · mapa-da-mente.netlify.app · página " + p + " de " + pages, M, 290); }
 
   const blob = d.output("blob");
   const fname = "mapa-da-mente" + (st.ctx.nome ? "-" + st.ctx.nome.toLowerCase().normalize("NFD").replace(/[^a-z0-9]+/g,"-") : "") + ".pdf";
