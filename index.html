@@ -441,7 +441,7 @@ function radarSVG(sc){
   const labels = LIKERT_IDS.map((id,i) => { const [x,y] = pt(i,5.75); const anchor = Math.abs(x-cx) < 8 ? "middle" : (x > cx ? "start" : "end");
     return `<text x="${x.toFixed(1)}" y="${(y+4).toFixed(1)}" text-anchor="${anchor}" class="rd-label">${VIDA[id].curto}</text>`; }).join("");
   const dots = LIKERT_IDS.map((id,i) => { const [x,y] = pt(i, Math.max(1, sc[id].v)); return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4.5" style="fill:${LVCOR[sc[id].lv]}"/>`; }).join("");
-  return `<svg viewBox="0 0 400 380" role="img" aria-label="Radar com as 10 áreas do teste" class="radar">
+  return `<svg viewBox="-40 0 480 380" role="img" aria-label="Radar com as 10 áreas do teste" class="radar">
     <polygon points="${ring(5)}" class="rd-band-hi"/><polygon points="${ring(3.5)}" class="rd-band-mid"/><polygon points="${ring(2.5)}" class="rd-band-lo"/>
     ${axes}<polygon points="${poly}" class="rd-shape"/>${dots}${labels}</svg>`;
 }
@@ -587,7 +587,7 @@ async function makePdf(sc, syn, bf){
 
   // cartões
   const rk = rankScales(sc);
-  newPage();
+  y += 6; need(90);
   d.setFont("helvetica","bold"); d.setFontSize(16); d.setTextColor(...ink); d.text("O que você pode estar vivendo", M, y); y += 6;
   para("Da área mais forte para a mais leve. Veja se as situações batem com a sua vida.", 9.5, mut, "normal", 4);
   rk.present.forEach(s => {
