@@ -92,6 +92,8 @@ th{font-family:var(--f-mono);font-size:.72rem;letter-spacing:.06em;text-transfor
 .sitbox blockquote{margin:0;padding:10px 14px;background:var(--bg);border-radius:10px;font-style:italic}
 textarea{font:inherit;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:10px 12px;width:100%;resize:vertical}
 textarea:focus-visible{outline:3px solid var(--mid);outline-offset:2px}
+.consent{flex-direction:row;align-items:flex-start;gap:10px;font-size:.92rem;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px}
+.consent input{margin-top:3px;width:18px;height:18px;flex:none}
 /* mapa visual */
 .wrap.wide{max-width:760px}
 .glance{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:18px;align-items:center}
@@ -506,12 +508,13 @@ function renderSit(){
   <p class="muted">Escreva até três situações que te incomodam, te cansam ou te intrigam, do jeito que você contaria a um amigo. No resultado, o Mapa liga cada uma às áreas do teste e explica por que ela pode estar acontecendo.</p></div>
   <div class="card">
     ${[0,1,2].map(i => `<label for="sit-${i}">Situação ${i+1}<textarea id="sit-${i}" rows="3" placeholder="${["Ex.: Depois de uma reunião com cliente eu chego em casa e não consigo falar com ninguém.","Ex.: Deixo a proposta pra última hora mesmo sabendo que vou me apertar.","Ex.: Barulho no escritório me tira do sério e eu perco o foco."][i]}">${esc(s[i]||"")}</textarea></label>`).join("")}
-    <p class="hint">Fica só no seu navegador. A ligação com as áreas é feita por palavras-chave, então descreva o que acontece e o que você sente.</p>
+    <p class="hint">Descreva o que acontece e o que você sente. A IA do Mapa da Mente lê e explica cada situação no resultado.</p>
+    <label class="consent" for="consent"><input type="checkbox" id="consent" ${st.consent ? "checked" : ""}> <span>Autorizo guardar minhas respostas de forma confidencial para o André Mesquita estudar o tema e melhorar este teste. Elas não são publicadas nem repassadas a terceiros.</span></label>
     <div class="row"><button class="btn" id="go">Ver meu mapa</button><button class="btn ghost" id="skip">Pular</button></div>
   </div>`;
-  const grab = () => { st.sit = [0,1,2].map(i => document.getElementById("sit-"+i).value); };
+  const grab = () => { st.sit = [0,1,2].map(i => document.getElementById("sit-"+i).value); st.consent = document.getElementById("consent").checked; };
   document.getElementById("go").onclick = () => { grab(); st.step = "res"; save(); render(); window.scrollTo(0,0); };
-  document.getElementById("skip").onclick = () => { st.sit = ["","",""]; st.step = "res"; save(); render(); window.scrollTo(0,0); };
+  document.getElementById("skip").onclick = () => { st.sit = ["","",""]; st.consent = document.getElementById("consent").checked; st.step = "res"; save(); render(); window.scrollTo(0,0); };
 }
 
 function sitHTML(sc){
@@ -545,6 +548,8 @@ function renderRes(){
   <p class="muted">Um retrato de como a sua cabeça tem funcionado, com situações do dia a dia para você se reconhecer e o porquê de cada uma. É triagem, não diagnóstico.</p></div>
   ${sc.risco ? `<div class="aviso" role="note"><strong>Antes de tudo:</strong> você marcou que pensou em se ferir ou que seria melhor estar morto. Isso merece cuidado hoje. Fale com alguém de confiança e ligue para o CVV no 188 (24 horas, gratuito) ou procure uma UPA.</div>` : ""}
   <div class="row"><button class="btn" id="pdf">Baixar resultado em PDF</button><button class="btn ghost" id="redo">Refazer o teste</button><span class="hint" id="pdfmsg"></span></div>
+  ${st.consent === undefined ? `<section class="card" id="consentcard"><h3>Posso guardar suas respostas?</h3><p class="muted">Elas ficam guardadas de forma confidencial para o André Mesquita estudar o tema e melhorar este teste. Não são publicadas nem repassadas a terceiros.</p><div class="row"><button class="btn" id="c-sim">Sim, pode guardar</button><button class="btn ghost" id="c-nao">Não guardar</button></div></section>` : ""}
+  <p class="hint" id="salvostatus">${st.salvo ? "Suas respostas estão guardadas." : ""}</p>
   <section class="card">
     <h2>Seu mapa em um olhar</h2>
     <div class="glance">
@@ -571,9 +576,29 @@ function renderRes(){
     <p class="hint">Baseado no e-book <em>Superdotação: da suspeita à confirmação técnica</em>, de Elô Lima (elo.barbarulo.com.br).</p></section>
   <section class="card"><details><summary>Glossário</summary><dl style="margin-top:12px">${GLOSS.map(g=>`<div><dt>${esc(g[0])}</dt><dd>${esc(g[1])}</dd></div>`).join("")}</dl></details></section>
   <section class="card"><details><summary>Referências</summary><ul class="plain muted" style="font-size:.9rem;margin-top:12px">${REFS.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></details></section>`;
-  document.getElementById("redo").onclick = () => { st = {step:"ctx", idx:0, ans:{}, sit:["","",""], sitIA:null, ctx:st.ctx}; save(); render(); window.scrollTo(0,0); };
+  document.getElementById("redo").onclick = () => { st = {step:"ctx", idx:0, ans:{}, sit:["","",""], sitIA:null, consent:st.consent, salvo:false, sessao:null, ctx:st.ctx}; save(); render(); window.scrollTo(0,0); };
   document.getElementById("pdf").onclick = () => makePdf(sc, syn, bf);
-  pedirLeituraIA(sc);
+  const cs = document.getElementById("c-sim"), cn = document.getElementById("c-nao");
+  if(cs) cs.onclick = () => { st.consent = true; save(); document.getElementById("consentcard").remove(); salvarResposta(sc); };
+  if(cn) cn.onclick = () => { st.consent = false; save(); document.getElementById("consentcard").remove(); };
+  pedirLeituraIA(sc).finally(() => salvarResposta(sc));
+}
+
+async function salvarResposta(sc){
+  if(st.consent !== true || st.salvo) return;
+  if(!st.sessao) { st.sessao = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2)); save(); }
+  const chave = sitChave();
+  const ia = st.sitIA && st.sitIA.chave === chave ? st.sitIA.leituras : null;
+  const escores = {}; SCALES.forEach(s => escores[s.id] = {nome: s.nome, valor: Math.round(sc[s.id].v*100)/100, texto: sc[s.id].txt, nivel: LVTXT[sc[s.id].lv]});
+  const respostas = ITEMS.map((it, ix) => ({n: ix+1, escala: it.s, pergunta: it.t, invertido: it.r, valor: st.ans[ix] === undefined ? null : (scaleOf(it.s).tipo==="lik" ? st.ans[ix]+1 : st.ans[ix])}));
+  try{
+    const r = await fetch("/api/salvar-resposta", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({
+      consentimento: true, sessao: st.sessao, versao: "2026-11-02", nome: st.ctx.nome || "", idade: st.ctx.idade || "", medicacao: st.ctx.med || "",
+      escores, respostas, situacoes: JSON.parse(chave), leitura_ia: ia })});
+    if(!r.ok) throw new Error("http " + r.status);
+    st.salvo = true; save();
+    const el = document.getElementById("salvostatus"); if(el) el.textContent = "Suas respostas estão guardadas.";
+  }catch(e){ /* tenta de novo na próxima vez que o resultado abrir */ }
 }
 
 async function pedirLeituraIA(sc){
